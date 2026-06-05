@@ -1,0 +1,11 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro'
+import SettingsPage from '../components/settings/SettingsPage'
+import { getSettings } from '../lib/api/settings'
+
+const settings = await getSettings()
+---
+
+<AdminLayout title="Settings | Pluem Live">
+  <SettingsPage client:load initialSettings={settings} />
+</AdminLayout>

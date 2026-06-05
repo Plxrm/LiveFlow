@@ -1,0 +1,11 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro'
+import LivePage from '../components/live/LivePage'
+import { getLiveSessions } from '../lib/api/live'
+
+const sessions = await getLiveSessions()
+---
+
+<AdminLayout title="Live Sessions | Pluem Live">
+  <LivePage client:load initialSessions={sessions} />
+</AdminLayout>

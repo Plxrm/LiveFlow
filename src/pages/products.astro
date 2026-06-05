@@ -1,0 +1,16 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro'
+import ProductsPage from '../components/products/ProductsPage'
+import { getProducts, getProductStats } from '../lib/api/products'
+
+const products = await getProducts()
+const stats = await getProductStats()
+---
+
+<AdminLayout title="Inventory | Pluem Live">
+  <ProductsPage
+    client:load
+    initialProducts={products}
+    stats={stats}
+  />
+</AdminLayout>

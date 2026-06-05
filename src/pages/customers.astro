@@ -1,0 +1,11 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro'
+import CustomersPage from '../components/customers/CustomersPage'
+import { getCustomers } from '../lib/api/customers'
+
+const customers = await getCustomers()
+---
+
+<AdminLayout title="Customers | Pluem Live">
+  <CustomersPage client:load initialCustomers={customers} />
+</AdminLayout>

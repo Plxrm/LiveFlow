@@ -1,0 +1,379 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pluem - TikTok Live Management Dashboard</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "on-tertiary-fixed-variant": "#783100",
+                        "surface-container-high": "#e6e8f2",
+                        "surface-container-low": "#f2f3fd",
+                        "secondary-fixed-dim": "#b0c6ff",
+                        "primary": "#005bbf",
+                        "tertiary-fixed-dim": "#ffb691",
+                        "surface-container-lowest": "#ffffff",
+                        "secondary-container": "#759efd",
+                        "on-surface-variant": "#414754",
+                        "outline-variant": "#c1c6d6",
+                        "surface": "#f9f9ff",
+                        "inverse-on-surface": "#eff0fa",
+                        "surface-container-highest": "#e0e2ec",
+                        "on-secondary-fixed-variant": "#00429c",
+                        "on-secondary": "#ffffff",
+                        "on-primary-fixed-variant": "#004493",
+                        "outline": "#727785",
+                        "primary-container": "#1a73e8",
+                        "tertiary-container": "#c55500",
+                        "primary-fixed-dim": "#adc7ff",
+                        "surface-bright": "#f9f9ff",
+                        "on-tertiary": "#ffffff",
+                        "secondary-fixed": "#d9e2ff",
+                        "surface-container": "#ecedf7",
+                        "surface-tint": "#005bc0",
+                        "on-error": "#ffffff",
+                        "on-secondary-fixed": "#001945",
+                        "error": "#ba1a1a",
+                        "inverse-surface": "#2d3038",
+                        "error-container": "#ffdad6",
+                        "on-surface": "#191c23",
+                        "surface-variant": "#e0e2ec",
+                        "surface-dim": "#d8d9e3",
+                        "on-secondary-container": "#00337c",
+                        "on-tertiary-fixed": "#341100",
+                        "on-primary-container": "#ffffff",
+                        "background": "#f9f9ff",
+                        "on-tertiary-container": "#0e0200",
+                        "on-error-container": "#93000a",
+                        "on-primary-fixed": "#001a41",
+                        "on-background": "#191c23",
+                        "primary-fixed": "#d8e2ff",
+                        "secondary": "#2b5bb5",
+                        "tertiary": "#9e4300",
+                        "on-primary": "#ffffff",
+                        "inverse-primary": "#adc7ff",
+                        "tertiary-fixed": "#ffdbcb"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.25rem",
+                        "lg": "0.5rem",
+                        "xl": "0.75rem",
+                        "full": "9999px"
+                    },
+                    "spacing": {
+                        "xs": "4px",
+                        "container-max-width": "1440px",
+                        "sm": "8px",
+                        "md": "16px",
+                        "base": "4px",
+                        "sidebar-width": "260px",
+                        "gutter": "24px",
+                        "lg": "24px",
+                        "xl": "32px"
+                    },
+                    "fontFamily": {
+                        "label-md": ["IBM Plex Sans"],
+                        "headline-lg": ["IBM Plex Sans"],
+                        "body-md": ["IBM Plex Sans"],
+                        "headline-sm": ["IBM Plex Sans"],
+                        "body-lg": ["IBM Plex Sans"],
+                        "label-sm": ["IBM Plex Sans"],
+                        "headline-md": ["IBM Plex Sans"],
+                        "headline-lg-mobile": ["IBM Plex Sans"],
+                        "title-lg": ["IBM Plex Sans"]
+                    },
+                    "fontSize": {
+                        "label-md": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600" }],
+                        "body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-sm": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+                        "body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "label-sm": ["11px", { "lineHeight": "14px", "fontWeight": "600" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "headline-lg-mobile": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "title-lg": ["18px", { "lineHeight": "24px", "fontWeight": "500" }]
+                    }
+                }
+            }
+        }
+    </script>
+<style>
+        body { font-family: 'IBM Plex Sans', sans-serif; background-color: #f9f9ff; }
+        .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .shadow-diffuse { box-shadow: 0 4px 12px rgba(26, 73, 232, 0.05); }
+        .shadow-dropdown { box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08); }
+        .pulse-dot { animation: pulse 2s infinite; }
+        @keyframes pulse {
+            0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0.7); }
+            70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(22, 163, 74, 0); }
+            100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(22, 163, 74, 0); }
+        }
+    </style>
+</head>
+<body class="bg-background text-on-background h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav aria-label="Sidebar" class="fixed left-0 top-0 h-screen w-[260px] bg-surface dark:bg-inverse-surface shadow-sm z-50 flex flex-col py-6 gap-2 hidden md:flex">
+<div class="px-6 mb-6 flex items-center gap-4">
+<div class="w-10 h-10 rounded-full bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-xl">
+                P
+            </div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Pluem Admin</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">TikTok Live Management</p>
+</div>
+</div>
+<div class="flex flex-col h-full gap-2">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">sensors</span>
+<span class="font-body-md text-body-md">Live</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md text-body-md font-medium">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-body-md text-body-md">Orders</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-body-md text-body-md">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md text-body-md">Customers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-body-md text-body-md">Shipping</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md text-body-md">Analytics</span>
+</a>
+<div class="mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md text-body-md">Settings</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area Wrapper -->
+<div class="flex-1 md:ml-[260px] flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar -->
+<header class="h-16 bg-surface dark:bg-inverse-surface flex justify-between items-center px-8 w-full z-40 border-b border-outline-variant dark:border-outline shrink-0">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-headline-md font-extrabold text-primary dark:text-inverse-primary hidden md:block">Pluem</h2>
+<div class="md:hidden flex items-center">
+<button class="p-2 text-on-surface-variant">
+<span class="material-symbols-outlined">menu</span>
+</button>
+<span class="font-headline-md text-headline-md font-bold ml-2">Pluem</span>
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="hidden lg:flex items-center gap-6 mr-4 border-r border-outline-variant pr-6">
+<div class="flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Total Revenue Today</span>
+<span class="font-title-lg text-title-lg font-bold text-primary">฿24,500</span>
+</div>
+<div class="flex flex-col items-end">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">Orders</span>
+<span class="font-title-lg text-title-lg font-bold text-on-surface">85</span>
+</div>
+</div>
+<div class="flex items-center gap-4">
+<button class="relative p-2 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container cursor-pointer active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+<span class="absolute top-1 right-1 w-2.5 h-2.5 bg-error rounded-full border-2 border-surface"></span>
+</button>
+<button class="p-2 text-on-surface-variant hover:text-primary transition-colors rounded-full hover:bg-surface-container cursor-pointer active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+<button class="bg-primary-container text-on-primary-container px-4 py-2 rounded-lg font-label-md text-label-md hover:bg-primary transition-colors cursor-pointer active:opacity-80 transition-opacity hidden sm:block">
+                        Create Order
+                    </button>
+</div>
+</div>
+</header>
+<!-- Scrollable Content -->
+<main class="flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+<div class="max-w-container-max-width mx-auto flex flex-col lg:flex-row gap-6">
+<!-- Left Column (Main Dashboard Content) -->
+<div class="flex-1 flex flex-col gap-6">
+<!-- Hero Section: LIVE Banner -->
+<div class="bg-white rounded-xl shadow-diffuse p-6 flex flex-col sm:flex-row items-center justify-between border-l-4 border-error relative overflow-hidden">
+<div class="absolute -right-10 -top-10 w-32 h-32 bg-error opacity-5 rounded-full blur-2xl"></div>
+<div class="flex items-center gap-4">
+<div class="w-12 h-12 rounded-full bg-error/10 flex items-center justify-center relative">
+<span class="w-4 h-4 bg-error rounded-full pulse-dot"></span>
+<span class="material-symbols-outlined text-error absolute opacity-0">videocam</span>
+</div>
+<div>
+<h2 class="font-headline-sm text-headline-sm text-on-surface flex items-center gap-2">
+                                    กำลังไลฟ์สด
+                                </h2>
+<p class="font-title-lg text-title-lg font-bold text-error tracking-wider mt-1">02:45:10</p>
+</div>
+</div>
+<div class="mt-4 sm:mt-0 flex gap-3">
+<button class="px-4 py-2 bg-surface-container-high text-on-surface rounded-lg font-label-md text-label-md hover:bg-surface-container-highest transition-colors">
+                                หยุดชั่วคราว
+                            </button>
+<button class="px-4 py-2 bg-error text-on-error rounded-lg font-label-md text-label-md hover:bg-error/90 transition-colors shadow-sm">
+                                จบไลฟ์
+                            </button>
+</div>
+</div>
+<!-- Stat Cards Grid -->
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+<div class="bg-white rounded-xl shadow-diffuse p-5 border border-surface-container flex flex-col gap-3 hover:shadow-dropdown transition-shadow duration-300">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-lg bg-primary/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary">inventory_2</span>
+</div>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">สต็อกทั้งหมด</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">1,240</h3>
+</div>
+</div>
+<div class="bg-white rounded-xl shadow-diffuse p-5 border border-surface-container flex flex-col gap-3 hover:shadow-dropdown transition-shadow duration-300">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-lg bg-[#f59e0b]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#f59e0b]">shopping_cart</span>
+</div>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">จองแล้ว</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">342</h3>
+</div>
+</div>
+<div class="bg-white rounded-xl shadow-diffuse p-5 border border-surface-container flex flex-col gap-3 hover:shadow-dropdown transition-shadow duration-300">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-lg bg-[#10b981]/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-[#10b981]">local_shipping</span>
+</div>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">พร้อมส่ง</p>
+<h3 class="font-headline-md text-headline-md text-on-surface">156</h3>
+</div>
+</div>
+<div class="bg-white rounded-xl shadow-diffuse p-5 border border-surface-container flex flex-col gap-3 hover:shadow-dropdown transition-shadow duration-300">
+<div class="flex justify-between items-start">
+<div class="w-10 h-10 rounded-lg bg-primary-container/10 flex items-center justify-center">
+<span class="material-symbols-outlined text-primary-container">payments</span>
+</div>
+</div>
+<div>
+<p class="font-label-sm text-label-sm text-on-surface-variant uppercase mb-1">ยอดขายวันนี้</p>
+<h3 class="font-headline-md text-headline-md text-primary">฿24,500</h3>
+</div>
+</div>
+</div>
+<!-- Recent Orders Table Section -->
+<div class="bg-white rounded-xl shadow-diffuse border border-surface-container flex flex-col flex-1">
+<div class="p-5 border-b border-surface-container flex justify-between items-center bg-surface/50 rounded-t-xl">
+<h3 class="font-title-lg text-title-lg text-on-surface font-semibold">รายการล่าสุด</h3>
+<button class="text-primary font-label-md text-label-md hover:underline flex items-center gap-1">
+                                ดูทั้งหมด <span class="material-symbols-outlined text-sm">arrow_forward</span>
+</button>
+</div>
+<div class="overflow-x-auto">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface border-b border-outline-variant font-label-md text-label-md text-on-surface-variant uppercase">
+<th class="py-3 px-5 font-medium">ID</th>
+<th class="py-3 px-5 font-medium">ลูกค้า</th>
+<th class="py-3 px-5 font-medium">สินค้า</th>
+<th class="py-3 px-5 font-medium">ยอด</th>
+<th class="py-3 px-5 font-medium">สถานะ</th>
+<th class="py-3 px-5 font-medium">เวลา</th>
+</tr>
+</thead>
+<tbody class="font-body-md text-body-md text-on-surface">
+<tr class="border-b border-[#f0f2f5] hover:bg-surface-container-low transition-colors h-[56px]">
+<td class="py-2 px-5 text-on-surface-variant">#PL-9021</td>
+<td class="py-2 px-5 font-medium">คุณสมชาย</td>
+<td class="py-2 px-5 text-on-surface-variant truncate max-w-[150px]">เสื้อยืด Oversize</td>
+<td class="py-2 px-5 font-medium">฿350</td>
+<td class="py-2 px-5">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#fef08a] text-[#854d0e]">
+                                                รอชำระ
+                                            </span>
+</td>
+<td class="py-2 px-5 text-on-surface-variant">10:24</td>
+</tr>
+<tr class="border-b border-[#f0f2f5] hover:bg-surface-container-low transition-colors h-[56px]">
+<td class="py-2 px-5 text-on-surface-variant">#PL-9020</td>
+<td class="py-2 px-5 font-medium">คุณกัญญา</td>
+<td class="py-2 px-5 text-on-surface-variant truncate max-w-[150px]">กางเกงยีนส์ขาสั้น</td>
+<td class="py-2 px-5 font-medium">฿450</td>
+<td class="py-2 px-5">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#bbf7d0] text-[#166534]">
+                                                ชำระแล้ว
+                                            </span>
+</td>
+<td class="py-2 px-5 text-on-surface-variant">10:15</td>
+</tr>
+<tr class="border-b border-[#f0f2f5] hover:bg-surface-container-low transition-colors h-[56px]">
+<td class="py-2 px-5 text-on-surface-variant">#PL-9019</td>
+<td class="py-2 px-5 font-medium">คุณวิชัย</td>
+<td class="py-2 px-5 text-on-surface-variant truncate max-w-[150px]">หมวกแก๊ปสีดำ</td>
+<td class="py-2 px-5 font-medium">฿190</td>
+<td class="py-2 px-5">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#fecaca] text-[#991b1b]">
+                                                ยกเลิก
+                                            </span>
+</td>
+<td class="py-2 px-5 text-on-surface-variant">09:58</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+<!-- Right Panel (Verification) -->
+<div class="lg:w-[320px] xl:w-[380px] shrink-0 flex flex-col gap-4">
+<h3 class="font-headline-sm text-headline-sm text-on-surface font-semibold flex items-center gap-2">
+<span class="material-symbols-outlined text-tertiary">fact_check</span>
+                        รอยืนยันยอด
+                        <span class="bg-tertiary-container/10 text-tertiary text-xs py-0.5 px-2 rounded-full ml-auto">3 รายการ</span>
+</h3>
+<div class="bg-white rounded-xl shadow-dropdown border border-surface-container p-5 flex flex-col gap-4">
+<div class="aspect-[3/4] bg-surface-container-high rounded-lg overflow-hidden border border-outline-variant relative group">
+<img alt="Thai bank transfer slip on smartphone" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" data-alt="A clear, high-resolution photograph of a Thai bank transfer slip displayed on a modern smartphone screen. The image shows transaction details such as amount, date, and bank logos clearly. The lighting is professional, creating a clean, modern aesthetic suitable for a high-end financial or e-commerce dashboard. The colors are crisp, with soft shadows adding depth." src="https://lh3.googleusercontent.com/aida-public/AB6AXuAs33LxiiyeSKE8w2UWkXhZRaP6DM26uM6Icv1qE76TCJ47sfuo3_J-XP6aaXjBzBB9uNC-odwDST_UKf78ttj4gCFh8ub60-Ff12BcpZ65D6tKqK8AQ3b-kyK1p4dMYuUEqLGxg1-yYMfdp6JwH0n8aMn1ZOplIg-5b-nOpvJ2GowYv3BG3txg-qHn5p_R-1VP6SpMlpxv4Ps7nFZfTneJjs_SV0s6s08RxoJSE0jZcPIm8-peTDzwmtS4hSvWlWZXTbl3dPG_hXw">
+<div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity">
+<button class="bg-white text-on-surface p-2 rounded-full hover:bg-primary-container hover:text-white transition-colors">
+<span class="material-symbols-outlined">zoom_in</span>
+</button>
+</div>
+</div>
+<div class="flex flex-col gap-1 text-center bg-surface p-3 rounded-lg border border-surface-container">
+<span class="font-label-sm text-label-sm text-on-surface-variant uppercase">โอนจาก</span>
+<span class="font-title-lg text-title-lg font-semibold text-on-surface">คุณกัญญา</span>
+<span class="font-headline-sm text-headline-sm font-bold text-primary mt-1">฿350.00</span>
+<span class="font-label-md text-label-md text-on-surface-variant mt-1 text-xs">#PL-9020 • 10:15</span>
+</div>
+<div class="flex flex-col gap-2 mt-2">
+<button class="w-full bg-primary-container text-on-primary-container py-3 rounded-lg font-label-md text-label-md font-semibold hover:bg-primary transition-colors shadow-sm active:scale-[0.98]">
+                                ยืนยันยอดเงิน
+                            </button>
+<button class="w-full bg-transparent text-on-surface-variant py-2 rounded-lg font-label-md text-label-md hover:bg-surface-container-high transition-colors">
+                                แจ้งปัญหา
+                            </button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

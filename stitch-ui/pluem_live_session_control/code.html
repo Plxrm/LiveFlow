@@ -1,0 +1,503 @@
+<!DOCTYPE html><html class="light" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pluem Admin - Live Session Control</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary": "#ffffff",
+                    "secondary-container": "#759efd",
+                    "tertiary": "#9e4300",
+                    "on-tertiary-container": "#0e0200",
+                    "error-container": "#ffdad6",
+                    "on-primary-fixed": "#001a41",
+                    "on-secondary-container": "#00337c",
+                    "on-primary-container": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-secondary": "#ffffff",
+                    "on-error-container": "#93000a",
+                    "outline": "#727785",
+                    "on-surface-variant": "#414754",
+                    "tertiary-fixed-dim": "#ffb691",
+                    "on-error": "#ffffff",
+                    "tertiary-fixed": "#ffdbcb",
+                    "surface-tint": "#005bc0",
+                    "primary-fixed-dim": "#adc7ff",
+                    "surface-variant": "#e0e2ec",
+                    "surface-container-high": "#e6e8f2",
+                    "tertiary-container": "#c55500",
+                    "surface": "#f9f9ff",
+                    "on-primary": "#ffffff",
+                    "primary": "#005bbf",
+                    "primary-container": "#1a73e8",
+                    "on-secondary-fixed": "#001945",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed-variant": "#004493",
+                    "inverse-surface": "#2d3038",
+                    "on-tertiary-fixed": "#341100",
+                    "secondary": "#2b5bb5",
+                    "surface-container-low": "#f2f3fd",
+                    "secondary-fixed": "#d9e2ff",
+                    "on-tertiary-fixed-variant": "#783100",
+                    "on-secondary-fixed-variant": "#00429c",
+                    "on-surface": "#191c23",
+                    "secondary-fixed-dim": "#b0c6ff",
+                    "inverse-on-surface": "#eff0fa",
+                    "outline-variant": "#c1c6d6",
+                    "surface-container": "#ecedf7"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "12px",
+                    "xl": "16px",
+                    "full": "9999px"
+            },
+            "spacing": {
+                    "xs": "4px",
+                    "md": "16px",
+                    "gutter": "24px",
+                    "sidebar-width": "260px",
+                    "sm": "8px",
+                    "lg": "24px",
+                    "xl": "32px",
+                    "base": "4px",
+                    "container-max-width": "1440px"
+            },
+            "fontFamily": {
+                    "label-sm": ["IBM Plex Sans"],
+                    "body-md": ["IBM Plex Sans"],
+                    "headline-sm": ["IBM Plex Sans"],
+                    "headline-lg": ["IBM Plex Sans"],
+                    "body-lg": ["IBM Plex Sans"],
+                    "label-md": ["IBM Plex Sans"],
+                    "title-lg": ["IBM Plex Sans"],
+                    "headline-md": ["IBM Plex Sans"]
+            }
+          }
+        }
+      }
+    </script>
+<style>
+        body { font-family: 'IBM Plex Sans', sans-serif; }
+        .material-symbols-outlined {
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .animate-pulse-red {
+            animation: pulse-red 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        @keyframes pulse-red {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: .5; transform: scale(1.2); }
+        }
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background: #e0e2ec; border-radius: 10px; }
+        .glass-card { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(8px); }
+    </style>
+</head>
+<body class="bg-surface text-on-surface overflow-hidden">
+<!-- Persistent SideNavBar -->
+<aside class="fixed left-0 top-0 h-screen w-[260px] bg-surface-container-lowest shadow-sm flex flex-col py-6 gap-2 z-50">
+<div class="px-6 mb-8">
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">Pluem Admin</h1>
+<p class="font-body-md text-on-surface-variant text-xs">TikTok Live Management</p>
+</div>
+<nav class="flex-1 space-y-1">
+<!-- Live (Active) -->
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">sensors</span>
+<span class="font-body-md">Live</span>
+<span class="ml-auto w-2 h-2 rounded-full bg-error animate-pulse-red"></span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors mx-2 transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-body-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors mx-2" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-body-md">Orders</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors mx-2" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+<span class="font-body-md">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors mx-2" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-body-md">Customers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors mx-2" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-body-md">Shipping</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors mx-2" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-body-md">Analytics</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-high transition-colors mx-2" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-body-md">Settings</span>
+</a>
+</nav>
+<div class="mt-auto px-4">
+<div class="flex items-center gap-3 p-3 bg-surface-container rounded-lg">
+<div class="w-10 h-10 rounded-full bg-primary-container flex items-center justify-center text-white font-bold">PS</div>
+<div>
+<p class="font-label-md text-on-surface">Pluem Shop</p>
+<p class="text-[10px] text-on-surface-variant">Admin Account</p>
+</div>
+</div>
+</div>
+</aside>
+<!-- TopNavBar -->
+<header class="fixed top-0 right-0 left-[260px] h-16 bg-surface-container-lowest border-b border-outline-variant flex justify-between items-center px-8 z-40">
+<div class="flex items-center gap-8">
+<div class="flex items-center gap-4 bg-surface-container px-4 py-2 rounded-full w-80">
+<span class="material-symbols-outlined text-on-surface-variant">search</span>
+<input class="bg-transparent border-none focus:ring-0 text-sm w-full" placeholder="Search orders or products..." type="text">
+</div>
+</div>
+<div class="flex items-center gap-6">
+<div class="flex items-center gap-4 border-r border-outline-variant pr-6">
+<div class="text-right">
+<p class="font-label-md text-on-surface-variant uppercase tracking-wider text-[10px]">Today's Revenue</p>
+<p class="font-title-lg text-primary font-bold">฿142,500.00</p>
+</div>
+<div class="text-right">
+<p class="font-label-md text-on-surface-variant uppercase tracking-wider text-[10px]">Total Orders</p>
+<p class="font-title-lg text-on-surface font-bold">1,204</p>
+</div>
+</div>
+<button class="material-symbols-outlined text-on-surface-variant hover:text-primary transition-colors">notifications</button>
+<button class="bg-primary text-white px-5 py-2 rounded-lg font-label-md transition-all active:scale-95 shadow-md shadow-primary/20">
+                Create Order
+            </button>
+</div>
+</header>
+<!-- Main Content Area -->
+<main class="ml-[260px] pt-16 h-screen flex overflow-hidden">
+<div class="flex-1 overflow-y-auto custom-scrollbar p-gutter flex flex-col gap-6">
+<!-- Header: Control Section -->
+<div class="flex items-center justify-between bg-surface-container-lowest p-6 rounded-lg shadow-sm">
+<div>
+<div class="flex items-center gap-3 mb-1">
+<span class="w-3 h-3 rounded-full bg-error animate-pulse-red"></span>
+<h2 class="font-headline-md text-headline-md text-on-surface">Live Session Control</h2>
+</div>
+<p class="font-body-md text-on-surface-variant">Started at 18:30 (Duration: 01:45:22)</p>
+</div>
+<div class="flex gap-4">
+<button class="flex items-center gap-2 border border-outline px-6 py-2.5 rounded-lg font-label-md text-on-surface-variant hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined">pause</span> Pause Automation
+                    </button>
+<button class="flex items-center gap-2 bg-error text-white px-6 py-2.5 rounded-lg font-label-md shadow-lg shadow-error/20 transition-all active:scale-95">
+<span class="material-symbols-outlined">stop_circle</span> End Live
+                    </button>
+</div>
+</div>
+<!-- Session Stats -->
+<div class="grid grid-cols-4 gap-gutter">
+<div class="bg-surface-container-lowest p-5 rounded-lg shadow-sm border-l-4 border-primary">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-on-surface-variant uppercase text-[11px]">Current Revenue</span>
+<div class="bg-primary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">payments</span></div>
+</div>
+<p class="font-headline-md text-headline-md text-on-surface">฿48,920</p>
+<p class="text-[11px] text-primary font-bold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">trending_up</span> +12% vs last session
+                    </p>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-lg shadow-sm border-l-4 border-secondary">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-on-surface-variant uppercase text-[11px]">Total Orders</span>
+<div class="bg-secondary/10 p-2 rounded-lg"><span class="material-symbols-outlined text-secondary" style="font-variation-settings: 'FILL' 1;">shopping_bag</span></div>
+</div>
+<p class="font-headline-md text-headline-md text-on-surface">312</p>
+<p class="text-[11px] text-secondary font-bold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">receipt_long</span> 45 pending verification
+                    </p>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-lg shadow-sm border-l-4 border-on-tertiary-fixed-variant">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-on-surface-variant uppercase text-[11px]">Active Viewers</span>
+<div class="bg-on-tertiary-fixed-variant/10 p-2 rounded-lg"><span class="material-symbols-outlined text-on-tertiary-fixed-variant" style="font-variation-settings: 'FILL' 1;">visibility</span></div>
+</div>
+<p class="font-headline-md text-headline-md text-on-surface">1,842</p>
+<p class="text-[11px] text-on-tertiary-fixed-variant font-bold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">groups</span> Peak: 2.1k
+                    </p>
+</div>
+<div class="bg-surface-container-lowest p-5 rounded-lg shadow-sm border-l-4 border-outline">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-on-surface-variant uppercase text-[11px]">Comments</span>
+<div class="bg-surface-variant p-2 rounded-lg"><span class="material-symbols-outlined text-on-surface-variant" style="font-variation-settings: 'FILL' 1;">forum</span></div>
+</div>
+<p class="font-headline-md text-headline-md text-on-surface">5.2k</p>
+<p class="text-[11px] text-on-surface-variant font-bold mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-xs">bolt</span> 12 comments/sec
+                    </p>
+</div>
+</div>
+<!-- Product Release Control -->
+<div class="bg-surface-container-lowest rounded-lg shadow-sm overflow-hidden flex flex-col flex-1 min-h-[500px]">
+<div class="p-6 border-b border-outline-variant flex items-center justify-between sticky top-0 bg-surface-container-lowest z-10">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Product Release Control</h3>
+<p class="font-body-md text-on-surface-variant">Toggle products to make them available for CF</p>
+</div>
+<div class="flex gap-2">
+<button class="bg-surface-container px-4 py-2 rounded-lg font-label-md text-on-surface hover:bg-surface-container-high transition-colors">Select All</button>
+<button class="bg-surface-container px-4 py-2 rounded-lg font-label-md text-on-surface hover:bg-surface-container-high transition-colors">Reset Status</button>
+</div>
+</div>
+<div class="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 overflow-y-auto">
+<!-- Product Item 1 (Released) -->
+<div class="border-2 border-primary bg-primary/5 p-4 rounded-lg relative overflow-hidden group">
+<div class="absolute top-0 right-0 bg-primary text-white px-3 py-1 text-[10px] font-bold rounded-bl-lg">RELEASED</div>
+<div class="flex gap-4">
+<div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A professional product photograph of a sleek black luxury skincare bottle sitting on a polished white marble surface with soft, cinematic studio lighting creating elegant highlights and a high-end commercial feel. The background is a clean, neutral gradient of light blue and white to match a corporate modern aesthetic." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDH2OWTs9LG0ftyKjamN4ixAyRQZg6uloPfzpq9Tjp70kmwRuZ0FnU_XIYskNWZ7HTmb9N3HM3LG63GRkF9_8sLEQLGiBSKrHGSmiqdHoXiVu6nv0GGL5bOCDxRI0pvnm2Us0fq_qadUPA0wn6trGcfkfgn7YlPYzoQIDvxsLlHVQkQS2cZBVzTtz9kRI6JQKRwf9K6bJXAq3P6O3Od_ovBCuoOaSn2qd3Mzsy0aomyvhc9CXTvcMqyHu5B8dnR7DrTLwf5TzozIow">
+</div>
+<div class="flex-1">
+<p class="font-title-lg text-on-surface text-base truncate">Luxury Serum Pro</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-primary/10 text-primary font-bold px-2 py-0.5 rounded text-sm">ก1</span>
+<span class="text-on-surface-variant text-xs font-medium">Stock: 124</span>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="text-[11px] font-bold text-primary">LIVE NOW</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Product Item 2 (Pending) -->
+<div class="border border-outline-variant hover:border-primary/50 transition-colors p-4 rounded-lg relative overflow-hidden group">
+<div class="flex gap-4">
+<div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 grayscale opacity-60">
+<img class="w-full h-full object-cover" data-alt="A minimalist overhead shot of a premium designer wristwatch with a dark leather strap placed on a soft grey linen fabric. The lighting is diffused and natural, highlighting the metallic textures of the watch face. The color palette is composed of cool grays, deep browns, and bright silver accents, evoking professional reliability and elegance." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDssMcBVpfWNBSatcAE9U3BZIRLFSHmq4NPy2c7vio9vc8TrKV8V6onOdSodQseuXDcvXSSTSSTF_mqYJirVMRaNV_u0jQ32tn6uYCnPwPjH7t_7F8Df5n2L0alsMAVlL5JNqYwrlMoM7_z6XX02im1pmHbQH4aH_cnTdcnPCHHwLtuCLAAoVFvEqGOIP5oXFSpMFtRdsfvvwrVjCWIV5aJPBbVGpj8D9EBilKCE8cjGPl6amGxVzwQAcOIp8a9UxboLAnn5IHp3vY">
+</div>
+<div class="flex-1">
+<p class="font-title-lg text-on-surface text-base truncate">Minimalist Watch</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-surface-container text-on-surface-variant font-bold px-2 py-0.5 rounded text-sm">A2</span>
+<span class="text-on-surface-variant text-xs font-medium">Stock: 42</span>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="text-[11px] font-bold text-on-surface-variant">PENDING</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Product Item 3 (Released) -->
+<div class="border-2 border-primary bg-primary/5 p-4 rounded-lg relative overflow-hidden group">
+<div class="absolute top-0 right-0 bg-primary text-white px-3 py-1 text-[10px] font-bold rounded-bl-lg">RELEASED</div>
+<div class="flex gap-4">
+<div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+<img class="w-full h-full object-cover" data-alt="A sharp, centered product shot of a pair of high-quality noise-canceling headphones in matte white, set against a solid pastel blue background. The lighting is bright and even, casting soft shadows to emphasize the ergonomic design. The overall aesthetic is clean, minimalist, and tech-focused, utilizing a palette of whites and soft blues." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDombr3PKIy5b2d6WJXsjPmioYH7zz2mad-VSOyUH_0vpzftZpOtoIcZYxJrkO8Q9eLU0yxTJ9DaJ239HmDYf1gdax1NsN3b74VkulDkzoTVs0EYCIGl0nsuGy_OeDHxD3pL6fUnU7zvG0aN2p8JW4reayI3Vtvr73Q5dFsaTSBVRTz_hg1FrCwI0NDGhibaDXySN1SBe77QzNsRGo-j24wiUUzXDi7xQM9MqD6aE0V32rCLtudn_AMYuPLPoO02Ctto9n0jzCtXYI">
+</div>
+<div class="flex-1">
+<p class="font-title-lg text-on-surface text-base truncate">Cloud Buds Gen 2</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-primary/10 text-primary font-bold px-2 py-0.5 rounded text-sm">B5</span>
+<span class="text-on-surface-variant text-xs font-medium">Stock: 18</span>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="text-[11px] font-bold text-primary">LIVE NOW</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input checked="" class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Additional items for grid feel -->
+<div class="border border-outline-variant hover:border-primary/50 transition-colors p-4 rounded-lg relative overflow-hidden group">
+<div class="flex gap-4">
+<div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 grayscale opacity-60">
+<img class="w-full h-full object-cover" data-alt="High-fashion sunglasses displayed on a textured beige surface with sharp, artistic shadows created by bright sunlight. The lenses reflect a clear blue sky, adding a splash of color to the neutral, warm-toned composition. The visual style is contemporary and sophisticated, emphasizing texture and clean geometric lines." src="https://lh3.googleusercontent.com/aida-public/AB6AXuDsp6RKBsZByv8ihQpX_QfJqCb8QN4PWuA6Tn2OwcfnJCq4sl8Ui3y81iJ5Lv08xQ24gLbO3RFPCULbwtEiquBj07HOigZdwpE6YtynjQ8TY1KpU75B-IxU8Xly08RaBCSoO4f_OIRCyEtdtddBdBwAUNbXQeKR_M8Hp9yEy45-exKsGUZxmMsPLmdWZ11rJl_Pjj9UsUJ7bwrWn1FHm1kYp1rZbS0Yk5ntvUphLot98AKFmp9jaqTpLTPIW5nfLUxq6d5RVC5CR40">
+</div>
+<div class="flex-1">
+<p class="font-title-lg text-on-surface text-base truncate">Urban Shades</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-surface-container text-on-surface-variant font-bold px-2 py-0.5 rounded text-sm">C3</span>
+<span class="text-on-surface-variant text-xs font-medium">Stock: 88</span>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="text-[11px] font-bold text-on-surface-variant">PENDING</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<div class="border border-outline-variant hover:border-primary/50 transition-colors p-4 rounded-lg relative overflow-hidden group">
+<div class="flex gap-4">
+<div class="w-20 h-20 rounded-lg overflow-hidden flex-shrink-0 grayscale opacity-60">
+<img class="w-full h-full object-cover" data-alt="A lifestyle product photography scene featuring a high-end wireless speaker on a wooden desk next to a lush green plant. Soft afternoon sunlight streams through a window, creating long shadows and a warm, inviting atmosphere. The design is modern and minimalist with a palette of earth tones, deep greens, and charcoal gray." src="https://lh3.googleusercontent.com/aida-public/AB6AXuCjuNhxYYzhcrRwPb2aK5gsG0aFDgU5BfqgGoPkBf8DEdywUwNGK0jEGyJbkDwX3xkjcbpXGLw8uJGTpXcWYeKCCdUa1NMH7xOt-neEjXCHoitdvuHuBjSII_peKi7fD114jOEgRvOkzuz422dDwKOOD_vXCnYRr_B5UtdooCHqmcO2ddIK1wwjAp17M4HFvhvGw8cHN3NzKkDwbXxtHACk7nplp_C-NfCW9F5WqXQagE3kWYAgnU9NEx6Krf4s_alyGn85Uf_z9LI">
+</div>
+<div class="flex-1">
+<p class="font-title-lg text-on-surface text-base truncate">Omni Speaker</p>
+<div class="flex items-center gap-2 mt-1">
+<span class="bg-surface-container text-on-surface-variant font-bold px-2 py-0.5 rounded text-sm">S9</span>
+<span class="text-on-surface-variant text-xs font-medium">Stock: 15</span>
+</div>
+<div class="mt-4 flex items-center justify-between">
+<span class="text-[11px] font-bold text-on-surface-variant">PENDING</span>
+<label class="relative inline-flex items-center cursor-pointer">
+<input class="sr-only peer" type="checkbox">
+<div class="w-11 h-6 bg-outline-variant peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-primary"></div>
+</label>
+</div>
+</div>
+</div>
+</div>
+<!-- Empty State / Add more item -->
+<button class="border border-dashed border-outline hover:border-primary transition-all p-4 rounded-lg flex flex-col items-center justify-center gap-2 group">
+<span class="material-symbols-outlined text-outline group-hover:text-primary transition-colors text-3xl">add_circle</span>
+<span class="font-label-md text-on-surface-variant group-hover:text-primary transition-colors">Add Live Product</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Right Side Panel: Real-time Feed -->
+<aside class="w-[320px] bg-surface-container border-l border-outline-variant flex flex-col">
+<div class="p-6 border-b border-outline-variant flex items-center justify-between">
+<div>
+<h3 class="font-title-lg text-title-lg text-on-surface">Live Orders</h3>
+<p class="text-[11px] text-on-surface-variant font-medium flex items-center gap-1">
+<span class="w-2 h-2 rounded-full bg-secondary animate-pulse"></span> SYNCING REAL-TIME
+                    </p>
+</div>
+<span class="material-symbols-outlined text-on-surface-variant cursor-pointer hover:text-primary">filter_list</span>
+</div>
+<div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+<!-- Order Item -->
+<div class="bg-surface-container-lowest p-3 rounded-lg shadow-sm border border-transparent hover:border-primary/30 transition-all cursor-pointer transform hover:-translate-y-1">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-[10px] text-on-surface-variant">2 mins ago</span>
+<span class="bg-secondary/10 text-secondary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Verified</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-[11px] font-bold text-on-surface">WS</div>
+<div class="flex-1">
+<p class="font-label-md text-on-surface leading-none">Witsarut S.</p>
+<p class="text-[10px] text-on-surface-variant">Ordered: <span class="font-bold text-primary">ก1</span> x 2</p>
+</div>
+<div class="text-right">
+<p class="font-label-md text-on-surface font-bold text-xs">฿2,400</p>
+</div>
+</div>
+</div>
+<!-- Order Item -->
+<div class="bg-surface-container-lowest p-3 rounded-lg shadow-sm border border-transparent hover:border-primary/30 transition-all cursor-pointer transform hover:-translate-y-1">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-[10px] text-on-surface-variant">4 mins ago</span>
+<span class="bg-error/10 text-error text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Unpaid</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-[11px] font-bold text-on-surface">PK</div>
+<div class="flex-1">
+<p class="font-label-md text-on-surface leading-none">Praew K.</p>
+<p class="text-[10px] text-on-surface-variant">Ordered: <span class="font-bold text-primary">B5</span> x 1</p>
+</div>
+<div class="text-right">
+<p class="font-label-md text-on-surface font-bold text-xs">฿1,890</p>
+</div>
+</div>
+</div>
+<!-- Order Item -->
+<div class="bg-surface-container-lowest p-3 rounded-lg shadow-sm border border-transparent hover:border-primary/30 transition-all cursor-pointer transform hover:-translate-y-1">
+<div class="flex items-center justify-between mb-2">
+<span class="font-label-md text-[10px] text-on-surface-variant">5 mins ago</span>
+<span class="bg-secondary/10 text-secondary text-[10px] font-bold px-2 py-0.5 rounded-full uppercase">Verified</span>
+</div>
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-full bg-surface-variant flex items-center justify-center text-[11px] font-bold text-on-surface">TM</div>
+<div class="flex-1">
+<p class="font-label-md text-on-surface leading-none">Tana M.</p>
+<p class="text-[10px] text-on-surface-variant">Ordered: <span class="font-bold text-primary">ก1</span> x 1</p>
+</div>
+<div class="text-right">
+<p class="font-label-md text-on-surface font-bold text-xs">฿1,200</p>
+</div>
+</div>
+</div>
+<!-- Recent Automation Log -->
+<div class="mt-6 pt-4 border-t border-outline-variant">
+<p class="font-label-md text-on-surface-variant uppercase text-[10px] mb-3">Recent Activity</p>
+<div class="space-y-3">
+<div class="flex gap-2 text-[11px]">
+<span class="material-symbols-outlined text-xs text-primary">campaign</span>
+<p class="text-on-surface-variant"><span class="font-bold text-on-surface">System:</span> Auto-replied to "B5" comment by User_99</p>
+</div>
+<div class="flex gap-2 text-[11px]">
+<span class="material-symbols-outlined text-xs text-error">warning</span>
+<p class="text-on-surface-variant"><span class="font-bold text-on-surface">Alert:</span> Product <span class="font-bold">ก1</span> stock low (8 remaining)</p>
+</div>
+</div>
+</div>
+</div>
+<!-- Summary Footer -->
+<div class="p-6 bg-surface-container-lowest border-t border-outline-variant">
+<div class="flex justify-between items-center mb-4">
+<span class="font-label-md text-on-surface-variant">Live Orders (Session)</span>
+<span class="font-bold text-on-surface">฿12,450.00</span>
+</div>
+<button class="w-full bg-surface-container text-primary font-bold py-3 rounded-lg text-sm hover:bg-surface-container-high transition-colors">
+                    Export Session Log
+                </button>
+</div>
+</aside>
+</main>
+<script>
+        // Micro-interaction for toggles
+        document.querySelectorAll('input[type="checkbox"]').forEach(toggle => {
+            toggle.addEventListener('change', (e) => {
+                const card = e.target.closest('.border');
+                const label = card.querySelector('.font-bold.text-on-surface-variant, .font-bold.text-primary');
+                const badge = card.querySelector('.absolute');
+                
+                if (e.target.checked) {
+                    card.classList.add('border-primary', 'bg-primary/5');
+                    card.classList.remove('border-outline-variant');
+                    if(label) {
+                        label.innerText = 'LIVE NOW';
+                        label.classList.replace('text-on-surface-variant', 'text-primary');
+                    }
+                    // Add badge if not exists
+                    if(!badge) {
+                        const newBadge = document.createElement('div');
+                        newBadge.className = "absolute top-0 right-0 bg-primary text-white px-3 py-1 text-[10px] font-bold rounded-bl-lg";
+                        newBadge.innerText = "RELEASED";
+                        card.appendChild(newBadge);
+                    }
+                } else {
+                    card.classList.remove('border-primary', 'bg-primary/5');
+                    card.classList.add('border-outline-variant');
+                    if(label) {
+                        label.innerText = 'PENDING';
+                        label.classList.replace('text-primary', 'text-on-surface-variant');
+                    }
+                    if(badge) badge.remove();
+                }
+            });
+        });
+    </script>
+</body></html>

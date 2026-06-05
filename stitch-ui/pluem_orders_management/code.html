@@ -1,0 +1,375 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Pluem Admin - Orders Management</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+        tailwind.config = {
+          darkMode: "class",
+          theme: {
+            extend: {
+              "colors": {
+                      "on-primary-fixed-variant": "#004493",
+                      "on-primary-container": "#ffffff",
+                      "on-tertiary-fixed": "#341100",
+                      "error-container": "#ffdad6",
+                      "primary-fixed-dim": "#adc7ff",
+                      "surface-container-highest": "#e0e2ec",
+                      "on-primary-fixed": "#001a41",
+                      "inverse-on-surface": "#eff0fa",
+                      "primary-fixed": "#d8e2ff",
+                      "on-surface": "#191c23",
+                      "inverse-surface": "#2d3038",
+                      "on-error-container": "#93000a",
+                      "surface-dim": "#d8d9e3",
+                      "on-error": "#ffffff",
+                      "surface-tint": "#005bc0",
+                      "surface-container": "#ecedf7",
+                      "error": "#ba1a1a",
+                      "surface-container-lowest": "#ffffff",
+                      "primary-container": "#1a73e8",
+                      "background": "#f9f9ff",
+                      "on-secondary-container": "#00337c",
+                      "outline": "#727785",
+                      "primary": "#005bbf",
+                      "surface-variant": "#e0e2ec",
+                      "inverse-primary": "#adc7ff",
+                      "surface-container-low": "#f2f3fd",
+                      "on-surface-variant": "#414754",
+                      "on-secondary-fixed-variant": "#00429c",
+                      "tertiary-container": "#c55500",
+                      "tertiary": "#9e4300",
+                      "on-primary": "#ffffff",
+                      "secondary": "#2b5bb5",
+                      "on-tertiary": "#ffffff",
+                      "on-secondary-fixed": "#001945",
+                      "on-secondary": "#ffffff",
+                      "surface-bright": "#f9f9ff",
+                      "secondary-container": "#759efd",
+                      "surface": "#f9f9ff",
+                      "secondary-fixed-dim": "#b0c6ff",
+                      "tertiary-fixed": "#ffdbcb",
+                      "secondary-fixed": "#d9e2ff",
+                      "on-tertiary-fixed-variant": "#783100",
+                      "on-tertiary-container": "#0e0200",
+                      "tertiary-fixed-dim": "#ffb691",
+                      "surface-container-high": "#e6e8f2",
+                      "on-background": "#191c23",
+                      "outline-variant": "#c1c6d6"
+              },
+              "borderRadius": {
+                      "DEFAULT": "0.25rem",
+                      "lg": "0.5rem",
+                      "xl": "0.75rem",
+                      "full": "9999px"
+              },
+              "spacing": {
+                      "sidebar-width": "260px",
+                      "base": "4px",
+                      "sm": "8px",
+                      "xs": "4px",
+                      "gutter": "24px",
+                      "xl": "32px",
+                      "lg": "24px",
+                      "container-max-width": "1440px",
+                      "md": "16px"
+              },
+              "fontFamily": {
+                      "label-md": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-md": [
+                              "IBM Plex Sans"
+                      ],
+                      "body-md": [
+                              "IBM Plex Sans"
+                      ],
+                      "label-sm": [
+                              "IBM Plex Sans"
+                      ],
+                      "title-lg": [
+                              "IBM Plex Sans"
+                      ],
+                      "body-lg": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-lg": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-sm": [
+                              "IBM Plex Sans"
+                      ],
+                      "headline-lg-mobile": [
+                              "IBM Plex Sans"
+                      ]
+              },
+              "fontSize": {
+                      "label-md": [
+                              "12px",
+                              {
+                                      "lineHeight": "16px",
+                                      "letterSpacing": "0.05em",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "headline-md": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "body-md": [
+                              "14px",
+                              {
+                                      "lineHeight": "20px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "label-sm": [
+                              "11px",
+                              {
+                                      "lineHeight": "14px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "title-lg": [
+                              "18px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "500"
+                              }
+                      ],
+                      "body-lg": [
+                              "16px",
+                              {
+                                      "lineHeight": "24px",
+                                      "fontWeight": "400"
+                              }
+                      ],
+                      "headline-lg": [
+                              "32px",
+                              {
+                                      "lineHeight": "40px",
+                                      "letterSpacing": "-0.02em",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-sm": [
+                              "20px",
+                              {
+                                      "lineHeight": "28px",
+                                      "fontWeight": "600"
+                              }
+                      ],
+                      "headline-lg-mobile": [
+                              "24px",
+                              {
+                                      "lineHeight": "32px",
+                                      "fontWeight": "600"
+                              }
+                      ]
+              }
+      },
+          },
+        }
+      </script>
+</head>
+<body class="bg-background text-on-background font-body-md h-screen w-full overflow-hidden flex">
+<!-- SideNavBar Component -->
+<aside class="bg-surface dark:bg-inverse-surface shadow-sm fixed left-0 top-0 h-screen w-[260px] flex flex-col py-6 gap-2 z-50">
+<!-- Brand / Header -->
+<div class="px-6 pb-6 border-b border-surface-container-high mb-4">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 bg-primary-container rounded-lg flex items-center justify-center text-on-primary-container">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">admin_panel_settings</span>
+</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary dark:text-inverse-primary">Pluem Admin</h1>
+<p class="font-label-md text-label-md text-on-surface-variant">TikTok Live Management</p>
+</div>
+</div>
+</div>
+<!-- Navigation Links -->
+<nav class="flex-1 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg font-body-md text-body-md hover:bg-surface-container-highest dark:hover:bg-on-surface-variant transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">sensors</span>
+                Live
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg font-body-md text-body-md hover:bg-surface-container-highest dark:hover:bg-on-surface-variant transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                Dashboard
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container dark:bg-secondary text-on-secondary-container dark:text-on-secondary rounded-lg mx-2 font-body-md text-body-md transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">shopping_cart</span>
+                Orders
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg font-body-md text-body-md hover:bg-surface-container-highest dark:hover:bg-on-surface-variant transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">inventory_2</span>
+                Inventory
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg font-body-md text-body-md hover:bg-surface-container-highest dark:hover:bg-on-surface-variant transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">group</span>
+                Customers
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg font-body-md text-body-md hover:bg-surface-container-highest dark:hover:bg-on-surface-variant transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+                Shipping
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg font-body-md text-body-md hover:bg-surface-container-highest dark:hover:bg-on-surface-variant transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined">analytics</span>
+                Analytics
+            </a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant dark:text-surface-variant hover:bg-surface-container-high dark:hover:bg-surface-container-highest transition-colors mx-2 rounded-lg font-body-md text-body-md hover:bg-surface-container-highest dark:hover:bg-on-surface-variant transition-all duration-200 ease-in-out active:scale-95 mt-auto" href="#">
+<span class="material-symbols-outlined">settings</span>
+                Settings
+            </a>
+</nav>
+</aside>
+<!-- Main Content Wrapper -->
+<div class="ml-[260px] flex-1 flex flex-col h-screen overflow-hidden">
+<!-- TopNavBar Component -->
+<header class="bg-surface dark:bg-inverse-surface border-b border-outline-variant dark:border-outline fixed top-0 right-0 left-[260px] h-16 flex justify-between items-center px-8 z-40">
+<!-- Left Side / Breadcrumb / Search Placeholder (Search is in TopNav JSON config) -->
+<div class="flex items-center gap-4">
+<div class="relative w-64">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full h-10 pl-10 pr-4 rounded-lg bg-surface-container-low border border-outline-variant focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-all font-body-md text-body-md text-on-surface" placeholder="Search orders..." type="text">
+</div>
+</div>
+<!-- Right Side / Actions -->
+<div class="flex items-center gap-6">
+<div class="flex gap-4 text-on-surface-variant">
+<button class="hover:text-primary transition-colors cursor-pointer active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="hover:text-primary transition-colors cursor-pointer active:opacity-80 transition-opacity">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+</div>
+<button class="bg-primary-container text-on-primary-container hover:bg-primary px-4 py-2 rounded-lg font-label-md text-label-md font-bold transition-colors cursor-pointer active:opacity-80 transition-opacity">
+                    Create Order
+                </button>
+</div>
+</header>
+<!-- Page Content -->
+<main class="flex-1 overflow-y-auto mt-16 p-xl bg-background">
+<div class="max-w-container-max-width mx-auto">
+<!-- Page Header & Filters -->
+<div class="mb-lg">
+<h2 class="font-headline-lg text-headline-lg text-on-surface mb-6">รายการคำสั่งซื้อ</h2>
+<div class="flex flex-wrap gap-2 mb-4 border-b border-outline-variant pb-2">
+<button class="px-4 py-2 font-label-md text-label-md font-bold text-primary border-b-2 border-primary">ทั้งหมด</button>
+<button class="px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">รอชำระ</button>
+<button class="px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">ชำระแล้ว</button>
+<button class="px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">รอที่อยู่</button>
+<button class="px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">จัดส่งแล้ว</button>
+<button class="px-4 py-2 font-label-md text-label-md text-on-surface-variant hover:text-primary transition-colors">ยกเลิก</button>
+</div>
+<div class="flex justify-between items-center mb-6">
+<div class="relative w-80">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full h-10 pl-10 pr-4 rounded-lg bg-surface-container-lowest border border-outline-variant focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none transition-all font-body-md text-body-md text-on-surface" placeholder="ค้นหาด้วย ID หรือ ชื่อลูกค้า..." type="text">
+</div>
+<button class="flex items-center gap-2 px-4 py-2 rounded-lg border border-outline-variant bg-surface-container-lowest text-on-surface-variant hover:bg-surface-container-low transition-colors font-label-md text-label-md">
+<span class="material-symbols-outlined">calendar_today</span>
+                            ตัวกรองวันที่
+                        </button>
+</div>
+</div>
+<!-- Orders Table Card -->
+<div class="bg-surface-container-lowest rounded-xl shadow-sm border border-surface-variant overflow-hidden">
+<table class="w-full text-left border-collapse">
+<thead>
+<tr class="bg-surface border-b border-surface-variant text-on-surface-variant font-label-md text-label-md uppercase tracking-wider">
+<th class="p-4 font-semibold">ID</th>
+<th class="p-4 font-semibold">ลูกค้า</th>
+<th class="p-4 font-semibold">สินค้า</th>
+<th class="p-4 font-semibold text-right">ยอด</th>
+<th class="p-4 font-semibold text-center">สถานะ</th>
+<th class="p-4 font-semibold">วัน-เวลา</th>
+<th class="p-4 font-semibold text-right">Actions</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant font-body-md text-body-md text-on-surface">
+<!-- Row 1 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4 font-medium text-primary">#PL-9021</td>
+<td class="p-4">สมชาย ใจดี</td>
+<td class="p-4">เสื้อยืดสีขาว (M) x2</td>
+<td class="p-4 text-right font-medium">฿590.00</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-[#fff8e1] text-[#ff8f00]">รอชำระ</span>
+</td>
+<td class="p-4 text-on-surface-variant">24 ต.ค. 14:30</td>
+<td class="p-4 text-right">
+<button class="text-primary hover:text-primary-container font-label-md text-label-md mr-3">ดูรายละเอียด</button>
+<button class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 2 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4 font-medium text-primary">#PL-9020</td>
+<td class="p-4">วิภาดา รักสวย</td>
+<td class="p-4">กางเกงยีนส์ (L) x1</td>
+<td class="p-4 text-right font-medium">฿1,290.00</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-[#e8f5e9] text-[#2e7d32]">ชำระแล้ว</span>
+</td>
+<td class="p-4 text-on-surface-variant">24 ต.ค. 12:15</td>
+<td class="p-4 text-right">
+<button class="text-primary hover:text-primary-container font-label-md text-label-md mr-3">ดูรายละเอียด</button>
+<button class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 3 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4 font-medium text-primary">#PL-9019</td>
+<td class="p-4">กิตติศักดิ์ แซ่ลี้</td>
+<td class="p-4">หมวกแก๊ปสีดำ x1</td>
+<td class="p-4 text-right font-medium">฿350.00</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-[#e3f2fd] text-[#1565c0]">จัดส่งแล้ว</span>
+</td>
+<td class="p-4 text-on-surface-variant">23 ต.ค. 09:40</td>
+<td class="p-4 text-right">
+<button class="text-primary hover:text-primary-container font-label-md text-label-md mr-3">ดูรายละเอียด</button>
+<button class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+<!-- Row 4 -->
+<tr class="hover:bg-surface-container-low transition-colors">
+<td class="p-4 font-medium text-primary">#PL-9018</td>
+<td class="p-4">พรพรรณ ทองสุก</td>
+<td class="p-4">รองเท้าผ้าใบ (38) x1</td>
+<td class="p-4 text-right font-medium">฿2,490.00</td>
+<td class="p-4 text-center">
+<span class="inline-flex items-center px-2.5 py-0.5 rounded-full font-label-sm text-label-sm bg-[#ffebee] text-[#c62828]">ยกเลิก</span>
+</td>
+<td class="p-4 text-on-surface-variant">22 ต.ค. 18:20</td>
+<td class="p-4 text-right">
+<button class="text-primary hover:text-primary-container font-label-md text-label-md mr-3">ดูรายละเอียด</button>
+<button class="text-on-surface-variant hover:text-on-surface"><span class="material-symbols-outlined text-[20px]">more_vert</span></button>
+</td>
+</tr>
+</tbody>
+</table>
+<!-- Pagination (Static for demo) -->
+<div class="p-4 border-t border-surface-variant flex items-center justify-between bg-surface-container-lowest">
+<span class="font-body-md text-body-md text-on-surface-variant">Showing 1 to 4 of 124 entries</span>
+<div class="flex gap-1">
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-container-low disabled:opacity-50"><span class="material-symbols-outlined">chevron_left</span></button>
+<button class="px-3 py-1 rounded bg-primary-container text-on-primary-container font-label-md text-label-md">1</button>
+<button class="px-3 py-1 rounded text-on-surface hover:bg-surface-container-low font-label-md text-label-md">2</button>
+<button class="px-3 py-1 rounded text-on-surface hover:bg-surface-container-low font-label-md text-label-md">3</button>
+<button class="p-1 rounded text-on-surface-variant hover:bg-surface-container-low"><span class="material-symbols-outlined">chevron_right</span></button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

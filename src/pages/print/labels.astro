@@ -1,0 +1,225 @@
+---
+/**
+ * /print/labels?ids=shipment_id1,shipment_id2,...
+ * หน้าพิมพ์ label — layout เปล่า ไม่มี sidebar/header
+ * Auto-print เมื่อโหลดเสร็จ
+ */
+import { supabaseAdmin } from '../../lib/supabase/admin'
+import ShippingLabel from '../../components/orders/ShippingLabel'
+import { getSettings } from '../../lib/api/settings'
+
+const idsParam = Astro.url.searchParams.get('ids') || ''
+const ids = idsParam.split(',').map(s => s.trim()).filter(Boolean)
+
+interface ShipmentRow {
+  id: string
+  order_id: string
+  tracking_number: string | null
+  label_pdf_url: string | null
+  kex_con_no: string | null
+  kex_del_route: string | null
+  kex_service_code: string | null
+  orders: {
+    order_number: string
+    shipping_fee: number
+    customers: {
+      display_name: string | null
+      phone: string | null
+      address: string | null
+      address_detail: string | null
+      subdistrict: string | null
+      district: string | null
+      province: string | null
+      zipcode: string | null
+    } | null
+    order_items: { product_name: string; quantity: number }[]
+  } | null
+}
+
+let shipments: ShipmentRow[] = []
+const settings = await getSettings()
+
+if (supabaseAdmin && ids.length > 0) {
+  const { data } = await supabaseAdmin
+    .from('shipments')
+    .select(`
+      id, order_id, tracking_number, label_pdf_url,
+      kex_con_no, kex_del_route, kex_service_code,
+      orders (
+        order_number, shipping_fee,
+        customers ( display_name, phone, address, address_detail, subdistrict, district, province, zipcode ),
+        order_items ( product_name, quantity )
+      )
+    `)
+    .in('id', ids)
+
+  shipments = (data as any[]) || []
+}
+
+// Separate: PDFs vs custom label needed
+const pdfShipments    = shipments.filter(s => s.label_pdf_url)
+const customShipments = shipments.filter(s => !s.label_pdf_url)
+
+const senderInfo = {
+  name:    settings.shop_sender_name || settings.shop_name,
+  phone:   settings.shop_phone,
+  address: [settings.shop_address, settings.shop_subdistrict, settings.shop_district, settings.shop_province].filter(Boolean).join(' '),
+  zipcode: settings.shop_zipcode,
+}
+---
+
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>พิมพ์ใบปะหน้า</title>
+    <style>
+      * { box-sizing: border-box; margin: 0; padding: 0; }
+      body {
+        font-family: Arial, sans-serif;
+        background: #f0f0f0;
+      }
+      .no-print-toolbar {
+        background: #1e293b;
+        color: white;
+        padding: 12px 24px;
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        font-size: 14px;
+      }
+      .no-print-toolbar button {
+        background: #3b82f6;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        padding: 6px 16px;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .no-print-toolbar button:hover { background: #2563eb; }
+      .no-print-toolbar a {
+        color: #94a3b8;
+        text-decoration: none;
+        font-size: 13px;
+      }
+      .no-print-toolbar a:hover { color: white; }
+      .labels-container {
+        padding: 24px;
+        display: flex;
+        flex-wrap: wrap;
+        gap: 16px;
+        justify-content: flex-start;
+      }
+      /* PDF label iframes */
+      .pdf-label-wrapper {
+        background: white;
+        border: 1px solid #ccc;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        page-break-after: always;
+        break-after: page;
+      }
+      .pdf-label-wrapper iframe {
+        display: block;
+        border: none;
+        width: 3in;
+        height: 4in;
+      }
+      @media print {
+        .no-print-toolbar { display: none !important; }
+        body { background: white; }
+        .labels-container { padding: 0; gap: 0; }
+        .pdf-label-wrapper {
+          border: none;
+          box-shadow: none;
+          page-break-after: always;
+          break-after: page;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <!-- Toolbar (hidden when printing) -->
+    <div class="no-print-toolbar">
+      <span>🖨️ พิมพ์ใบปะหน้าพัสดุ ({shipments.length} ใบ)</span>
+      <button onclick="window.print()">🖨️ พิมพ์ทันที</button>
+      <button onclick="window.close()" style="background:#475569">ปิด</button>
+      <a href="/orders/print-labels">← กลับ</a>
+    </div>
+
+    {ids.length === 0 && (
+      <div style="padding: 60px; text-align: center; color: #666;">
+        <p style="font-size: 18px; margin-bottom: 8px;">ไม่ได้ระบุ Shipment IDs</p>
+        <p>กรุณาเลือก shipments จากหน้า <a href="/orders/print-labels">พิมพ์ใบปะหน้า</a></p>
+      </div>
+    )}
+
+    {shipments.length === 0 && ids.length > 0 && (
+      <div style="padding: 60px; text-align: center; color: #666;">
+        <p style="font-size: 18px; margin-bottom: 8px;">ไม่พบข้อมูล Shipment</p>
+        <p>Shipment อาจถูกลบหรือ ID ไม่ถูกต้อง</p>
+      </div>
+    )}
+
+    <div class="labels-container">
+      {/* ─── PDF Labels (from KEX API) ───────────────────────── */}
+      {pdfShipments.map(s => (
+        <div class="pdf-label-wrapper" key={s.id}>
+          <iframe
+            src={s.label_pdf_url!}
+            title={`Label ${s.tracking_number}`}
+            width="3in"
+            height="4in"
+          />
+        </div>
+      ))}
+
+      {/* ─── Custom Labels (fallback) ─────────────────────────── */}
+      {customShipments.map(s => {
+        const order = s.orders as any
+        const customer = order?.customers
+        const items = order?.order_items || []
+        const itemCount = items.reduce((sum: number, i: any) => sum + (i.quantity || 1), 0)
+        const recipientAddress = [
+          customer?.address_detail || customer?.address,
+          customer?.subdistrict ? `แขวง ${customer.subdistrict}` : '',
+          customer?.district ? `เขต ${customer.district}` : '',
+          customer?.province || '',
+        ].filter(Boolean).join(' ')
+
+        return (
+          <ShippingLabel
+            key={s.id}
+            trackingNumber={s.tracking_number || s.kex_con_no || '—'}
+            delRoute={s.kex_del_route || undefined}
+            serviceCode={s.kex_service_code || undefined}
+            sender={senderInfo}
+            recipient={{
+              name:    customer?.display_name || 'ลูกค้า',
+              phone:   customer?.phone || '',
+              address: recipientAddress,
+              zipcode: customer?.zipcode || '',
+            }}
+            orderNumber={order?.order_number || '—'}
+            itemCount={itemCount}
+          />
+        )
+      })}
+    </div>
+
+    <script>
+      // Auto-print เมื่อโหลดเสร็จ (เฉพาะถ้ามี labels)
+      window.addEventListener('load', () => {
+        const hasLabels = document.querySelector('.pdf-label-wrapper, .shipping-label')
+        if (hasLabels) {
+          setTimeout(() => window.print(), 800)
+        }
+      })
+    </script>
+  </body>
+</html>

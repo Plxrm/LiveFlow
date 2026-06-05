@@ -1,0 +1,13 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import OrderDetailPage from '../../components/orders/OrderDetailPage'
+import { getOrderById } from '../../lib/api/orders'
+
+const { id } = Astro.params
+const order = await getOrderById(id!)
+if (!order) return Astro.redirect('/orders')
+---
+
+<AdminLayout title={`ออเดอร์ ${order.order_number} | Pluem Live`}>
+  <OrderDetailPage client:load order={order} />
+</AdminLayout>

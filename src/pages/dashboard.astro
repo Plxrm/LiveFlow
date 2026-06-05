@@ -1,0 +1,20 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro'
+import DashboardPage from '../components/dashboard/DashboardPage'
+import { getDashboardStats, getRecentOrders, getPendingPayments, getActiveLiveSession } from '../lib/api/dashboard'
+
+const stats = await getDashboardStats()
+const recentOrders = await getRecentOrders()
+const pendingPayments = await getPendingPayments()
+const liveSession = await getActiveLiveSession()
+---
+
+<AdminLayout title="Dashboard | Pluem Live">
+  <DashboardPage
+    client:load
+    stats={stats}
+    recentOrders={recentOrders}
+    pendingPayments={pendingPayments}
+    liveSession={liveSession}
+  />
+</AdminLayout>

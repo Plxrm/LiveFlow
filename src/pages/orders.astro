@@ -1,0 +1,16 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro'
+import OrdersPage from '../components/orders/OrdersPage'
+import { getOrders, getOrderStats } from '../lib/api/orders'
+
+const orders = await getOrders()
+const stats = await getOrderStats()
+---
+
+<AdminLayout title="Orders | Pluem Live">
+  <OrdersPage
+    client:load
+    initialOrders={orders}
+    stats={stats}
+  />
+</AdminLayout>

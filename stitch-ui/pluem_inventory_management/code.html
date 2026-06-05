@@ -1,0 +1,490 @@
+<!DOCTYPE html><html lang="th"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>คลังสินค้า - Pluem Admin</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script id="tailwind-config">
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            "colors": {
+                    "on-tertiary-fixed": "#341100",
+                    "primary-fixed": "#d8e2ff",
+                    "secondary": "#2b5bb5",
+                    "surface-container-high": "#e6e8f2",
+                    "tertiary": "#9e4300",
+                    "on-primary": "#ffffff",
+                    "error": "#ba1a1a",
+                    "on-error-container": "#93000a",
+                    "on-tertiary-fixed-variant": "#783100",
+                    "on-surface-variant": "#414754",
+                    "inverse-on-surface": "#eff0fa",
+                    "background": "#f9f9ff",
+                    "secondary-fixed-dim": "#b0c6ff",
+                    "surface": "#f9f9ff",
+                    "primary-container": "#1a73e8",
+                    "surface-container-lowest": "#ffffff",
+                    "on-primary-fixed": "#001a41",
+                    "outline": "#727785",
+                    "on-tertiary-container": "#0e0200",
+                    "on-tertiary": "#ffffff",
+                    "tertiary-fixed-dim": "#ffb691",
+                    "surface-container-low": "#f2f3fd",
+                    "surface-variant": "#e0e2ec",
+                    "on-primary-fixed-variant": "#004493",
+                    "tertiary-container": "#c55500",
+                    "surface-container": "#ecedf7",
+                    "inverse-surface": "#2d3038",
+                    "error-container": "#ffdad6",
+                    "on-background": "#191c23",
+                    "surface-tint": "#005bc0",
+                    "secondary-fixed": "#d9e2ff",
+                    "on-secondary-container": "#00337c",
+                    "primary-fixed-dim": "#adc7ff",
+                    "outline-variant": "#c1c6d6",
+                    "surface-bright": "#f9f9ff",
+                    "inverse-primary": "#adc7ff",
+                    "secondary-container": "#759efd",
+                    "on-secondary-fixed-variant": "#00429c",
+                    "on-surface": "#191c23",
+                    "tertiary-fixed": "#ffdbcb",
+                    "on-error": "#ffffff",
+                    "on-primary-container": "#ffffff",
+                    "on-secondary": "#ffffff",
+                    "on-secondary-fixed": "#001945",
+                    "surface-dim": "#d8d9e3",
+                    "surface-container-highest": "#e0e2ec",
+                    "primary": "#005bbf"
+            },
+            "borderRadius": {
+                    "DEFAULT": "0.25rem",
+                    "lg": "0.5rem",
+                    "xl": "0.75rem",
+                    "full": "9999px",
+                    "12": "12px"
+            },
+            "spacing": {
+                    "gutter": "24px",
+                    "md": "16px",
+                    "container-max-width": "1440px",
+                    "sidebar-width": "260px",
+                    "xl": "32px",
+                    "lg": "24px",
+                    "xs": "4px",
+                    "sm": "8px",
+                    "base": "4px"
+            },
+            "fontFamily": {
+                    "body-lg": ["IBM Plex Sans"],
+                    "headline-sm": ["IBM Plex Sans"],
+                    "label-sm": ["IBM Plex Sans"],
+                    "label-md": ["IBM Plex Sans"],
+                    "body-md": ["IBM Plex Sans"],
+                    "headline-lg-mobile": ["IBM Plex Sans"],
+                    "headline-md": ["IBM Plex Sans"],
+                    "headline-lg": ["IBM Plex Sans"],
+                    "title-lg": ["IBM Plex Sans"]
+            },
+            "fontSize": {
+                    "body-lg": ["16px", {"lineHeight": "24px", "fontWeight": "400"}],
+                    "headline-sm": ["20px", {"lineHeight": "28px", "fontWeight": "600"}],
+                    "label-sm": ["11px", {"lineHeight": "14px", "fontWeight": "600"}],
+                    "label-md": ["12px", {"lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500"}],
+                    "body-md": ["14px", {"lineHeight": "20px", "fontWeight": "400"}],
+                    "headline-lg-mobile": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-md": ["24px", {"lineHeight": "32px", "fontWeight": "600"}],
+                    "headline-lg": ["32px", {"lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "600"}],
+                    "title-lg": ["18px", {"lineHeight": "24px", "fontWeight": "500"}]
+            },
+            boxShadow: {
+              'card': '0 4px 12px rgba(26, 73, 232, 0.05)',
+              'dropdown': '0 8px 24px rgba(0, 0, 0, 0.08)'
+            }
+          },
+        },
+      }
+    </script>
+<style>
+        .material-symbols-outlined {
+          font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+        }
+        .material-symbols-outlined.fill {
+          font-variation-settings: 'FILL' 1;
+        }
+    </style>
+</head>
+<body class="bg-surface text-on-surface font-body-md antialiased h-screen overflow-hidden flex">
+<!-- SideNavBar -->
+<nav class="hidden md:flex flex-col fixed left-0 top-0 h-screen w-[260px] bg-surface shadow-sm border-r border-outline-variant z-50">
+<div class="px-6 py-6 border-b border-outline-variant">
+<div class="flex items-center gap-3">
+<div class="w-10 h-10 rounded-lg bg-primary-container text-on-primary-container flex items-center justify-center font-bold text-lg">P</div>
+<div>
+<h1 class="font-headline-sm text-headline-sm font-bold text-primary">Pluem Admin</h1>
+<p class="font-label-sm text-label-sm text-on-surface-variant">TikTok Live Management</p>
+</div>
+</div>
+</div>
+<div class="flex flex-col h-full py-6 gap-2 overflow-y-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">sensors</span>
+<span class="font-label-md text-label-md">Live</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<span class="font-label-md text-label-md">Dashboard</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">shopping_cart</span>
+<span class="font-label-md text-label-md">Orders</span>
+</a>
+<!-- Active Tab -->
+<a class="flex items-center gap-3 px-4 py-3 bg-secondary-container text-on-secondary-container rounded-lg mx-2 transition-all duration-200 ease-in-out active:scale-95" href="#">
+<span class="material-symbols-outlined fill">inventory_2</span>
+<span class="font-label-md text-label-md font-bold">Inventory</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">group</span>
+<span class="font-label-md text-label-md">Customers</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">local_shipping</span>
+<span class="font-label-md text-label-md">Shipping</span>
+</a>
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">analytics</span>
+<span class="font-label-md text-label-md">Analytics</span>
+</a>
+<div class="mt-auto">
+<a class="flex items-center gap-3 px-4 py-3 text-on-surface-variant hover:bg-surface-container-highest transition-colors mx-2 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<span class="font-label-md text-label-md">Settings</span>
+</a>
+</div>
+</div>
+</nav>
+<!-- Main Content Area -->
+<main class="flex-1 md:ml-[260px] h-screen overflow-y-auto flex flex-col bg-background">
+<!-- TopNavBar -->
+<header class="flex justify-between items-center px-8 h-16 bg-surface border-b border-outline-variant sticky top-0 z-40 shrink-0">
+<div class="flex items-center gap-4">
+<h2 class="font-headline-md text-headline-md font-extrabold text-primary">คลังสินค้า</h2>
+</div>
+<div class="flex items-center gap-4">
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 p-2 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="text-on-surface-variant hover:text-primary transition-colors cursor-pointer active:opacity-80 p-2 rounded-full hover:bg-surface-container">
+<span class="material-symbols-outlined">account_circle</span>
+</button>
+<button class="bg-primary-container text-on-primary-container font-label-md text-label-md px-4 py-2 rounded-lg flex items-center gap-2 hover:bg-primary hover:text-white transition-colors shadow-sm ml-2" onclick="document.getElementById('addProductModal').classList.remove('hidden')">
+<span class="material-symbols-outlined text-sm">add</span>
+                    เพิ่มสินค้า
+                </button>
+</div>
+</header>
+<div class="p-8 max-w-container-max-width mx-auto w-full flex-1 flex flex-col gap-6">
+<!-- Summary Cards -->
+<section class="grid grid-cols-1 md:grid-cols-3 gap-6">
+<!-- Total SKUs -->
+<div class="bg-surface-container-lowest rounded-12 p-6 shadow-card border border-surface-variant flex items-center justify-between">
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-1">ทั้งหมด</p>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">1,248</h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant mt-1">รายการสินค้าในระบบ</p>
+</div>
+<div class="w-12 h-12 rounded-lg bg-primary-fixed/20 text-primary-container flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl">inventory</span>
+</div>
+</div>
+<!-- Low Stock -->
+<div class="bg-surface-container-lowest rounded-12 p-6 shadow-card border border-surface-variant flex items-center justify-between">
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-1">สต็อกต่ำ</p>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">42</h3>
+<p class="font-label-sm text-label-sm text-error mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">warning</span>
+                            ต้องเติมสต็อกด่วน
+                        </p>
+</div>
+<div class="w-12 h-12 rounded-lg bg-error-container/50 text-error flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl">trending_down</span>
+</div>
+</div>
+<!-- Available -->
+<div class="bg-surface-container-lowest rounded-12 p-6 shadow-card border border-surface-variant flex items-center justify-between">
+<div>
+<p class="font-label-md text-label-md text-on-surface-variant uppercase mb-1">พร้อมขาย</p>
+<h3 class="font-headline-lg text-headline-lg text-on-surface">1,180</h3>
+<p class="font-label-sm text-label-sm text-[#0d9488] mt-1 flex items-center gap-1">
+<span class="material-symbols-outlined text-[14px]">check_circle</span>
+                            สถานะปกติ
+                        </p>
+</div>
+<div class="w-12 h-12 rounded-lg bg-[#0d9488]/10 text-[#0d9488] flex items-center justify-center">
+<span class="material-symbols-outlined text-2xl">check_box</span>
+</div>
+</div>
+</section>
+<!-- Search and Filters -->
+<section class="bg-surface-container-lowest rounded-12 p-4 shadow-card border border-surface-variant flex flex-col sm:flex-row gap-4 items-center justify-between">
+<div class="relative w-full sm:w-96">
+<span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-on-surface-variant">search</span>
+<input class="w-full pl-10 pr-4 py-2 bg-surface border border-outline-variant rounded-lg font-body-md text-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none transition-all" placeholder="ค้นหาชื่อสินค้า หรือ รหัส CF..." type="text">
+</div>
+<div class="flex gap-3 w-full sm:w-auto">
+<select class="bg-surface border border-outline-variant rounded-lg px-4 py-2 font-body-md text-body-md focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none">
+<option value="">ทุกหมวดหมู่</option>
+<option value="clothing">เสื้อผ้า</option>
+<option value="accessories">เครื่องประดับ</option>
+<option value="beauty">ความงาม</option>
+</select>
+<button class="px-4 py-2 border border-outline-variant rounded-lg font-label-md text-label-md text-on-surface-variant flex items-center gap-2 hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">filter_list</span>
+                        ตัวกรองเพิ่มเติม
+                    </button>
+</div>
+</section>
+<!-- Product Table -->
+<section class="bg-surface-container-lowest rounded-12 shadow-card border border-surface-variant flex-1 overflow-hidden flex flex-col">
+<div class="overflow-x-auto flex-1">
+<table class="w-full text-left border-collapse">
+<thead class="bg-surface font-label-md text-label-md text-on-surface-variant uppercase sticky top-0 z-10">
+<tr>
+<th class="px-6 py-4 font-medium border-b border-surface-variant">รหัส CF</th>
+<th class="px-6 py-4 font-medium border-b border-surface-variant">รูปภาพ</th>
+<th class="px-6 py-4 font-medium border-b border-surface-variant">ชื่อสินค้า</th>
+<th class="px-6 py-4 font-medium border-b border-surface-variant">หมวดหมู่</th>
+<th class="px-6 py-4 font-medium border-b border-surface-variant w-48">ระดับสต็อก</th>
+<th class="px-6 py-4 font-medium border-b border-surface-variant text-right">ราคา</th>
+<th class="px-6 py-4 font-medium border-b border-surface-variant text-center">สถานะ</th>
+<th class="px-6 py-4 font-medium border-b border-surface-variant text-right">จัดการ</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-variant font-body-md text-body-md text-on-surface">
+<!-- Row 1 (Healthy Stock) -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-14">
+<td class="px-6 py-2 font-semibold">ก1</td>
+<td class="px-6 py-2">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<img alt="A professional studio product shot of a minimalist white t-shirt neatly folded against a clean, bright, light-mode background. The lighting is soft and even, highlighting the fabric texture without harsh shadows. The aesthetic is clean, modern, and aligned with a high-end corporate e-commerce inventory system." class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuB9fb2SeXpbLahwIuv_rfbQW1qLoHRBbLDf8-GobRNduNKrhzsk-U0fspGcaTazeGA3TVGby44wA6timz7zW3cit7CfdTayi6TIznpUcJ1qfd0-drj4C1en7O47Xjve_ruOO-mQk9Emv7UbUAbQk_mXx0UoS18W4qfGVwdMPFDvb75vA0sMaD5DevbPT_bGn-M3SFiOZCHyUUzsdCmlQnN8qc7iE3F30PwvsLKfiypXe3W4w2OR4JzehFq5IeH1lZUE4rEIsj1UX5s">
+</div>
+</td>
+<td class="px-6 py-2 font-medium">เสื้อยืดคอกลม สีขาว M</td>
+<td class="px-6 py-2 text-on-surface-variant text-sm">เสื้อผ้า</td>
+<td class="px-6 py-2">
+<div class="flex items-center justify-between text-xs mb-1">
+<span>120 ชิ้น</span>
+<span class="text-on-surface-variant">/ 200</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-1.5">
+<div class="bg-[#0d9488] h-1.5 rounded-full" style="width: 60%"></div>
+</div>
+</td>
+<td class="px-6 py-2 text-right font-medium">฿199</td>
+<td class="px-6 py-2 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#0d9488]/10 text-[#0d9488]">
+                                        เปิดขาย
+                                    </span>
+</td>
+<td class="px-6 py-2 text-right">
+<button class="text-on-surface-variant hover:text-primary-container p-1 rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</td>
+</tr>
+<!-- Row 2 (Warning Stock) -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-14">
+<td class="px-6 py-2 font-semibold">ก2</td>
+<td class="px-6 py-2">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<img alt="A crisp, professional product photo of a folded black t-shirt set against a pure white background in a light-mode aesthetic. The lighting is diffused and bright, creating subtle highlights on the dark fabric. The composition is centered and minimalist, suitable for a sleek e-commerce management dashboard." class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuCbxxmLyhkDlbh2LNiKOdSVme6YaT6xtip1GVI12NWZq5bfhR12ex8ePsBcU_NwkJQ_ryMZUGQeN6Pe2VzoKvkTdb05pFhYZy-5zvkVpmrDs1ADWro78zyavS1D97D8m5zxpB9Jf1GldMhCZ8G3PD0eBZ2JgRKg0b8eAUvjfFK2A2n2aiO1pCIvC9wJCgtacnXFmXjX9huWv1g3P2KUcFyA6DWyPH-6EVYtEZgUgCWxlVhXOMzjOEUnpg0sXG5WuTDmX09DbYBnlKg">
+</div>
+</td>
+<td class="px-6 py-2 font-medium">เสื้อยืดคอกลม สีดำ M</td>
+<td class="px-6 py-2 text-on-surface-variant text-sm">เสื้อผ้า</td>
+<td class="px-6 py-2">
+<div class="flex items-center justify-between text-xs mb-1">
+<span class="text-[#ca8a04] font-medium">25 ชิ้น</span>
+<span class="text-on-surface-variant">/ 100</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-1.5">
+<div class="bg-[#ca8a04] h-1.5 rounded-full" style="width: 25%"></div>
+</div>
+</td>
+<td class="px-6 py-2 text-right font-medium">฿199</td>
+<td class="px-6 py-2 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#0d9488]/10 text-[#0d9488]">
+                                        เปิดขาย
+                                    </span>
+</td>
+<td class="px-6 py-2 text-right">
+<button class="text-on-surface-variant hover:text-primary-container p-1 rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</td>
+</tr>
+<!-- Row 3 (Danger Stock) -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-14">
+<td class="px-6 py-2 font-semibold">A1</td>
+<td class="px-6 py-2">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<img alt="A high-quality product flat lay of a simple silver necklace pendant resting on a clean, light grey surface. The environment is flooded with soft, high-key studio lighting indicative of a modern light-mode interface. The aesthetic is highly professional, clean, and organized, focusing entirely on the product detail." class="w-full h-full object-cover" src="https://lh3.googleusercontent.com/aida-public/AB6AXuAt74b1zrYzVz0UvKaRuCrXZDVO9Jmf_uAA4abNBVscMX-T30EX8FKAt2ZpWWWHG8JINw2kGBUyckhqLX58g7JcMuBUxVNrT1AIwGR_w0TpGfbigQ3DEPCk30t6ZodVuP9vaV6dksnm8J74beD-9CYFIPDlSe6rZSwankAFsR7S_-bjmksFmgP4-FL7e-mkeSeWfP5mxtH8OeZGtwjsZHJz2coqvWyhhtt2vAAAgj0vq_fA8WqUSsvCKdXKX4z9gfXeUEcyRD1OBK4">
+</div>
+</td>
+<td class="px-6 py-2 font-medium">สร้อยคอเงินแท้ ลายมินิมอล</td>
+<td class="px-6 py-2 text-on-surface-variant text-sm">เครื่องประดับ</td>
+<td class="px-6 py-2">
+<div class="flex items-center justify-between text-xs mb-1">
+<span class="text-error font-medium">4 ชิ้น</span>
+<span class="text-on-surface-variant">/ 50</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-1.5">
+<div class="bg-error h-1.5 rounded-full" style="width: 8%"></div>
+</div>
+</td>
+<td class="px-6 py-2 text-right font-medium">฿450</td>
+<td class="px-6 py-2 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-[#0d9488]/10 text-[#0d9488]">
+                                        เปิดขาย
+                                    </span>
+</td>
+<td class="px-6 py-2 text-right">
+<button class="text-on-surface-variant hover:text-primary-container p-1 rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</td>
+</tr>
+<!-- Row 4 (Inactive) -->
+<tr class="hover:bg-surface-container-lowest transition-colors h-14 bg-surface-container-low/30">
+<td class="px-6 py-2 font-semibold text-on-surface-variant">B1</td>
+<td class="px-6 py-2 opacity-60">
+<div class="w-10 h-10 rounded bg-surface-container flex items-center justify-center overflow-hidden border border-outline-variant">
+<span class="material-symbols-outlined text-outline-variant">image</span>
+</div>
+</td>
+<td class="px-6 py-2 font-medium text-on-surface-variant">เซ็ตเครื่องสำอาง (หมดชั่วคราว)</td>
+<td class="px-6 py-2 text-outline text-sm">ความงาม</td>
+<td class="px-6 py-2">
+<div class="flex items-center justify-between text-xs mb-1 opacity-60">
+<span class="text-error font-medium">0 ชิ้น</span>
+<span class="text-on-surface-variant">/ 30</span>
+</div>
+<div class="w-full bg-surface-variant rounded-full h-1.5 opacity-60">
+<div class="bg-error h-1.5 rounded-full" style="width: 0%"></div>
+</div>
+</td>
+<td class="px-6 py-2 text-right font-medium text-on-surface-variant">฿990</td>
+<td class="px-6 py-2 text-center">
+<span class="inline-flex items-center px-2 py-1 rounded-full text-[11px] font-semibold bg-surface-variant text-on-surface-variant">
+                                        ปิดขาย
+                                    </span>
+</td>
+<td class="px-6 py-2 text-right">
+<button class="text-on-surface-variant hover:text-primary-container p-1 rounded hover:bg-surface-container transition-colors">
+<span class="material-symbols-outlined text-sm">edit</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<!-- Pagination Footer -->
+<div class="border-t border-surface-variant px-6 py-3 flex items-center justify-between bg-surface-container-lowest">
+<span class="font-label-sm text-label-sm text-on-surface-variant">แสดง 1 ถึง 10 จาก 1,248 รายการ</span>
+<div class="flex items-center gap-1">
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant disabled:opacity-50"><span class="material-symbols-outlined text-sm">chevron_left</span></button>
+<button class="w-8 h-8 rounded-lg bg-primary-container text-on-primary-container font-label-md text-label-md flex items-center justify-center">1</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container text-on-surface-variant font-label-md text-label-md flex items-center justify-center">2</button>
+<button class="w-8 h-8 rounded-lg hover:bg-surface-container text-on-surface-variant font-label-md text-label-md flex items-center justify-center">3</button>
+<span class="text-on-surface-variant px-1">...</span>
+<button class="p-1 rounded hover:bg-surface-container text-on-surface-variant"><span class="material-symbols-outlined text-sm">chevron_right</span></button>
+</div>
+</div>
+</section>
+</div>
+</main>
+<!-- Add Product Modal (Simulated overlay) -->
+<div class="hidden fixed inset-0 z-[60] bg-on-surface/40 backdrop-blur-sm flex items-center justify-center p-4" id="addProductModal">
+<div class="bg-surface-container-lowest rounded-12 shadow-dropdown border border-surface-variant w-full max-w-2xl max-h-[921px] overflow-hidden flex flex-col">
+<!-- Modal Header -->
+<div class="px-6 py-4 border-b border-surface-variant flex justify-between items-center bg-surface">
+<h2 class="font-headline-sm text-headline-sm font-semibold text-on-surface">เพิ่มสินค้าใหม่</h2>
+<button class="text-on-surface-variant hover:text-error transition-colors p-1 rounded-full hover:bg-surface-container" onclick="document.getElementById('addProductModal').classList.add('hidden')">
+<span class="material-symbols-outlined">close</span>
+</button>
+</div>
+<!-- Modal Body -->
+<div class="p-6 overflow-y-auto flex-1 font-body-md text-body-md">
+<form class="space-y-6">
+<!-- Basic Info -->
+<div class="space-y-4">
+<h3 class="font-title-lg text-title-lg font-medium text-primary border-b border-surface-variant pb-2">ข้อมูลพื้นฐาน</h3>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">ชื่อสินค้า <span class="text-error">*</span></label>
+<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none" placeholder="เช่น เสื้อยืดคอกลม สีขาว" type="text">
+</div>
+<div class="grid grid-cols-2 gap-4">
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">หมวดหมู่</label>
+<select class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none">
+<option>เลือกหมวดหมู่</option>
+<option>เสื้อผ้า</option>
+<option>เครื่องประดับ</option>
+</select>
+</div>
+<div>
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">ราคาพื้นฐาน (฿) <span class="text-error">*</span></label>
+<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none" placeholder="0.00" type="number">
+</div>
+</div>
+</div>
+<!-- CF Settings -->
+<div class="space-y-4 bg-surface-container-low p-4 rounded-lg border border-surface-variant">
+<h3 class="font-title-lg text-title-lg font-medium text-primary flex items-center gap-2">
+<span class="material-symbols-outlined text-[18px]">vpn_key</span>
+                            การตั้งค่ารหัส CF (Range Support)
+                        </h3>
+<p class="font-label-sm text-label-sm text-on-surface-variant">สร้างรหัส CF หลายรายการพร้อมกัน เช่น A1 ถึง A10</p>
+<div class="flex items-center gap-4">
+<div class="flex-1">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">คำนำหน้า (Prefix)</label>
+<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none" placeholder="เช่น A, ก" type="text">
+</div>
+<div class="flex-1">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">หมายเลขเริ่มต้น</label>
+<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none" placeholder="1" type="number">
+</div>
+<div class="flex items-end pb-2">
+<span class="font-body-md text-body-md text-on-surface-variant">ถึง</span>
+</div>
+<div class="flex-1">
+<label class="block font-label-md text-label-md text-on-surface-variant mb-1">หมายเลขสิ้นสุด</label>
+<input class="w-full px-4 py-2 bg-surface border border-outline-variant rounded-lg focus:border-primary-container focus:ring-2 focus:ring-primary-fixed-dim outline-none" placeholder="10" type="number">
+</div>
+</div>
+<div class="flex justify-end">
+<button class="font-label-md text-label-md text-primary-container bg-primary-fixed/30 px-3 py-1.5 rounded-lg hover:bg-primary-fixed/50 transition-colors" type="button">
+                                สร้างพรีวิวรหัส CF
+                            </button>
+</div>
+</div>
+<!-- Preview generated items would go here in a real app -->
+</form>
+</div>
+<!-- Modal Footer -->
+<div class="px-6 py-4 border-t border-surface-variant bg-surface flex justify-end gap-3">
+<button class="px-6 py-2 border border-primary-container text-primary-container font-label-md text-label-md rounded-lg hover:bg-primary-fixed/20 transition-colors" onclick="document.getElementById('addProductModal').classList.add('hidden')">
+                    ยกเลิก
+                </button>
+<button class="px-6 py-2 bg-primary-container text-on-primary-container font-label-md text-label-md rounded-lg hover:bg-primary transition-colors shadow-sm">
+                    บันทึกสินค้า
+                </button>
+</div>
+</div>
+</div>
+</body></html>

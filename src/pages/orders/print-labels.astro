@@ -1,0 +1,11 @@
+---
+import AdminLayout from '../../layouts/AdminLayout.astro'
+import PrintLabelsPage from '../../components/orders/PrintLabelsPage'
+import { getOrders } from '../../lib/api/orders'
+
+const orders = await getOrders({ status: 'paid' })
+---
+
+<AdminLayout title="พิมพ์ใบปะหน้า | Pluem Live">
+  <PrintLabelsPage client:load orders={orders} />
+</AdminLayout>
