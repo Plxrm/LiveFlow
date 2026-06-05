@@ -20,3 +20,20 @@ export type OrderStatus = Order['status']
 export type PaymentMethod = Payment['method']
 export type PaymentStatus = Payment['status']
 export type ProductKeyStatus = ProductKey['status']
+
+// Message Templates
+export type MessageTemplate = Tables['message_templates']['Row']
+
+export type MessageStep =
+  | 'welcome'
+  | 'cf_success'
+  | 'cf_not_found'
+  | 'cf_no_live'
+  | 'cf_out_of_stock'
+  | 'slip_received'
+  | 'slip_no_order'
+  | 'payment_confirmed'
+  | 'payment_rejected'
+  | 'shipped'
+  | 'delivered'
+  | 'order_cancelled'

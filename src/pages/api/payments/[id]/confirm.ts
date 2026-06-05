@@ -3,6 +3,7 @@ import { supabaseAdmin } from '../../../../lib/supabase/admin'
 import { createOrderShipment, hasCompleteAddress } from '../../../../lib/api/shipping'
 import { pushMessage } from '../../../../lib/line/client'
 import { getSettings } from '../../../../lib/api/settings'
+import { getTemplatesByStep, buildMessages } from '../../../../lib/api/messages'
 
 export const PUT: APIRoute = async ({ params }) => {
   if (!supabaseAdmin) return new Response('Supabase not configured', { status: 503 })
@@ -54,15 +55,23 @@ export const PUT: APIRoute = async ({ params }) => {
       } else if (customer.line_user_id) {
         // ─── ไม่มีที่อยู่ → ส่ง LINE ถามที่อยู่ ────────────────────
         const checkoutUrl = import.meta.env.PUBLIC_CHECKOUT_URL || import.meta.env.PUBLIC_SUPABASE_URL?.replace('supabase.co', 'vercel.app') || ''
-        await pushMessage(customer.line_user_id, [
-          {
-            type: 'text',
-            text:
-              `✅ ยืนยันการชำระเงินแล้ว!\n\n` +
-              `กรุณากรอกที่อยู่จัดส่งเพื่อให้ระบบจัดส่งพัสดุให้คุณ:\n` +
-              `${checkoutUrl}?order=${payment.order_id}`
-          }
-        ])
+        const confirmedTpls = await getTemplatesByStep('payment_confirmed')
+        const confirmedMsgs = confirmedTpls.length > 0
+          ? buildMessages(confirmedTpls, {
+              order_number: order?.order_number || '',
+              amount: String(payment.amount || ''),
+              customer_name: (customer as any).display_name || 'ลูกค้า',
+            })
+          : [
+              {
+                type: 'text',
+                text:
+                  `✅ ยืนยันการชำระเงินแล้ว!\n\n` +
+                  `กรุณากรอกที่อยู่จัดส่งเพื่อให้ระบบจัดส่งพัสดุให้คุณ:\n` +
+                  `${checkoutUrl}?order=${payment.order_id}`
+              }
+            ]
+        await pushMessage(customer.line_user_id, confirmedMsgs)
       }
     }
 

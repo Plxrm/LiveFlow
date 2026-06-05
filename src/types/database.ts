@@ -380,6 +380,41 @@ export interface Database {
           created_at?: string
         }
       }
+      message_templates: {
+        Row: {
+          id: string
+          step: string
+          sort_order: number
+          msg_type: 'text' | 'image' | 'flex'
+          content: string | null
+          image_url: string | null
+          is_active: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          step: string
+          sort_order?: number
+          msg_type: 'text' | 'image' | 'flex'
+          content?: string | null
+          image_url?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          step?: string
+          sort_order?: number
+          msg_type?: 'text' | 'image' | 'flex'
+          content?: string | null
+          image_url?: string | null
+          is_active?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
     Views: {
       [_ in never]: never

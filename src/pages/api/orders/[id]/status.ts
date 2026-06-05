@@ -2,6 +2,8 @@ import type { APIRoute } from 'astro'
 import { updateOrderStatus } from '../../../../lib/api/orders'
 import { supabaseAdmin } from '../../../../lib/supabase/admin'
 import { markOrderKeysSold, releaseOrderKeys } from '../../../../lib/line/webhook-handler'
+import { pushMessage } from '../../../../lib/line/client'
+import { getTemplatesByStep, buildMessages } from '../../../../lib/api/messages'
 
 export const PUT: APIRoute = async ({ params, request }) => {
   if (!supabaseAdmin) {
@@ -22,6 +24,28 @@ export const PUT: APIRoute = async ({ params, request }) => {
       await markOrderKeysSold(orderId)
     } else if (newStatus === 'cancelled') {
       await releaseOrderKeys(orderId)
+    }
+
+    // ─── LINE notifications for delivered / cancelled ──────────────────────
+    if (newStatus === 'completed' || newStatus === 'cancelled') {
+      const { data: orderWithCustomer } = await supabaseAdmin
+        .from('orders')
+        .select('*, customers(*)')
+        .eq('id', orderId)
+        .single()
+
+      const customer = (orderWithCustomer as any)?.customers
+      if (customer?.line_user_id) {
+        const step = newStatus === 'completed' ? 'delivered' : 'order_cancelled'
+        const tpls = await getTemplatesByStep(step)
+        if (tpls.length > 0) {
+          const msgs = buildMessages(tpls, {
+            order_number: (orderWithCustomer as any)?.order_number || '',
+            customer_name: customer.display_name || 'ลูกค้า',
+          })
+          await pushMessage(customer.line_user_id, msgs)
+        }
+      }
     }
 
     return new Response(JSON.stringify(order), { 

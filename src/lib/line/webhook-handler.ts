@@ -4,6 +4,8 @@ import { replyMessage, pushMessage, getProfile, getMessageContent } from './clie
 import { generateOrderNumber } from '../api/orders'
 import { getSettings } from '../api/settings'
 import { createOrderShipment, hasCompleteAddress } from '../api/shipping'
+import { getTemplatesByStep, buildMessages } from '../api/messages'
+
 
 export async function handleLineWebhook(body: any) {
   if (!supabaseAdmin) return
@@ -31,7 +33,11 @@ export async function handleLineWebhook(body: any) {
         .maybeSingle()
 
       if (!order) {
-        await replyMessage(replyToken, [{ type: 'text', text: 'ไม่พบออเดอร์ที่รอชำระเงิน' }])
+        const noOrderTpls = await getTemplatesByStep('slip_no_order')
+        const noOrderMsgs = noOrderTpls.length > 0
+          ? buildMessages(noOrderTpls, {})
+          : [{ type: 'text', text: 'ไม่พบออเดอร์ที่รอชำระเงิน' }]
+        await replyMessage(replyToken, noOrderMsgs)
         continue
       }
 
@@ -65,7 +71,14 @@ export async function handleLineWebhook(body: any) {
 
       await supabaseAdmin.from('orders').update({ status: 'confirmed' }).eq('id', order.id)
 
-      await replyMessage(replyToken, [{ type: 'text', text: 'ได้รับสลิปแล้ว รอแอดมินตรวจสอบ' }])
+      const slipTpls = await getTemplatesByStep('slip_received')
+      const slipMsgs = slipTpls.length > 0
+        ? buildMessages(slipTpls, {
+            order_number: order.order_number || '',
+            amount: String(order.total || ''),
+          })
+        : [{ type: 'text', text: 'ได้รับสลิปแล้ว รอแอดมินตรวจสอบ' }]
+      await replyMessage(replyToken, slipMsgs)
 
       // ─── Auto-ship trigger (ถ้า auto_confirm + auto_ship เปิดอยู่) ───
       if (settings.auto_confirm_payment && settings.auto_ship_on_payment) {
@@ -109,20 +122,35 @@ export async function handleLineWebhook(body: any) {
 
       const liveSession = await getActiveLiveSession()
       if (!liveSession) {
-        await replyMessage(replyToken, [{ type: 'text', text: 'ขออภัย ตอนนี้ยังไม่มีไลฟ์เปิดขาย' }])
+        const noLiveTpls = await getTemplatesByStep('cf_no_live')
+        const noLiveMsgs = noLiveTpls.length > 0
+          ? buildMessages(noLiveTpls, {})
+          : [{ type: 'text', text: 'ขออภัย ตอนนี้ยังไม่มีไลฟ์เปิดขาย' }]
+        await replyMessage(replyToken, noLiveMsgs)
         await logCF(userId, text, parsed.cf_code, null, false, 'no_active_session')
         continue
       }
 
       const liveProduct = await findLiveProduct(liveSession.id, parsed.cf_code)
       if (!liveProduct) {
-        await replyMessage(replyToken, [{ type: 'text', text: settings.cf_error_message || `ไม่พบรหัส ${parsed.cf_code} ในไลฟ์นี้` }])
+        const notFoundTpls = await getTemplatesByStep('cf_not_found')
+        const notFoundMsgs = notFoundTpls.length > 0
+          ? buildMessages(notFoundTpls, { cf_code: parsed.cf_code })
+          : [{ type: 'text', text: settings.cf_error_message || `ไม่พบรหัส ${parsed.cf_code} ในไลฟ์นี้` }]
+        await replyMessage(replyToken, notFoundMsgs)
         await logCF(userId, text, parsed.cf_code, liveSession.id, false, 'product_not_found')
         continue
       }
 
       if (liveProduct.products.stock < parsed.quantity) {
-        await replyMessage(replyToken, [{ type: 'text', text: `ขออภัย ${liveProduct.products.name} เหลือเพียง ${liveProduct.products.stock} ชิ้น` }])
+        const outOfStockTpls = await getTemplatesByStep('cf_out_of_stock')
+        const outOfStockMsgs = outOfStockTpls.length > 0
+          ? buildMessages(outOfStockTpls, {
+              product_name: liveProduct.products.name,
+              quantity: String(liveProduct.products.stock),
+            })
+          : [{ type: 'text', text: `ขออภัย ${liveProduct.products.name} เหลือเพียง ${liveProduct.products.stock} ชิ้น` }]
+        await replyMessage(replyToken, outOfStockMsgs)
         await logCF(userId, text, parsed.cf_code, liveSession.id, false, 'out_of_stock')
         continue
       }
@@ -201,40 +229,61 @@ export async function handleLineWebhook(body: any) {
         ? (availableKeys[0] as any).key_code
         : null
 
-      const shippingLine = productFreeShipping
-        ? '🚚 ค่าส่ง: ฟรี!'
-        : `🚚 ค่าส่ง: ฿${shippingFee}`
+      const shippingText = productFreeShipping ? 'ฟรี!' : `฿${shippingFee}`
 
-      const replyMessages: any[] = [
-        {
-          type: 'text',
-          text: (settings.cf_success_message || `✅ สั่งซื้อสำเร็จ!`) + `\n` +
-            `📦 ${liveProduct.products.name}${reservedKeyCode ? ` — ${reservedKeyCode}` : ''} — ฿${price.toLocaleString()}\n` +
-            `${shippingLine}\n` +
-            `💰 รวม: ฿${total.toLocaleString()}\n` +
-            `📋 เลขออเดอร์: ${orderNumber}\n`
-        }
-      ]
+      // ─── ส่งข้อความ CF สำเร็จ ─────────────────────────────────────────────
+      const cfSuccessTpls = await getTemplatesByStep('cf_success')
+      let replyMessages: any[]
 
-      if (settings.promptpay_number) {
-        replyMessages.push({
-          type: 'flex',
-          altText: 'สแกนจ่ายเงิน',
-          contents: {
-            type: 'bubble',
-            body: {
-              type: 'box',
-              layout: 'vertical',
-              contents: [
-                { type: 'text', text: 'สแกนจ่ายเงิน', weight: 'bold', size: 'lg' },
-                { type: 'image', url: `https://promptpay.io/${settings.promptpay_number}/${total}.png`, size: 'full', aspectRatio: '1:1' },
-                { type: 'text', text: `฿${total.toLocaleString()}`, weight: 'bold', size: 'xl', align: 'center' },
-                { type: 'text', text: `ออเดอร์: ${orderNumber}`, size: 'sm', color: '#888888', align: 'center' }
-              ]
-            }
-          }
+      if (cfSuccessTpls.length > 0) {
+        replyMessages = buildMessages(cfSuccessTpls, {
+          product_name: liveProduct.products.name + (reservedKeyCode ? ` — ${reservedKeyCode}` : ''),
+          quantity: String(parsed.quantity),
+          price: price.toLocaleString(),
+          total: total.toLocaleString(),
+          order_number: orderNumber,
+          shipping_text: shippingText,
+          customer_name: customer.display_name || 'ลูกค้า',
+          cf_code: parsed.cf_code,
         })
+      } else {
+        // Fallback: hardcoded text + PromptPay QR
+        const shippingLine = productFreeShipping
+          ? '🚚 ค่าส่ง: ฟรี!'
+          : `🚚 ค่าส่ง: ฿${shippingFee}`
+
+        replyMessages = [
+          {
+            type: 'text',
+            text: (settings.cf_success_message || `✅ สั่งซื้อสำเร็จ!`) + `\n` +
+              `📦 ${liveProduct.products.name}${reservedKeyCode ? ` — ${reservedKeyCode}` : ''} — ฿${price.toLocaleString()}\n` +
+              `${shippingLine}\n` +
+              `💰 รวม: ฿${total.toLocaleString()}\n` +
+              `📋 เลขออเดอร์: ${orderNumber}\n`
+          }
+        ]
+
+        if (settings.promptpay_number) {
+          replyMessages.push({
+            type: 'flex',
+            altText: 'สแกนจ่ายเงิน',
+            contents: {
+              type: 'bubble',
+              body: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                  { type: 'text', text: 'สแกนจ่ายเงิน', weight: 'bold', size: 'lg' },
+                  { type: 'image', url: `https://promptpay.io/${settings.promptpay_number}/${total}.png`, size: 'full', aspectRatio: '1:1' },
+                  { type: 'text', text: `฿${total.toLocaleString()}`, weight: 'bold', size: 'xl', align: 'center' },
+                  { type: 'text', text: `ออเดอร์: ${orderNumber}`, size: 'sm', color: '#888888', align: 'center' }
+                ]
+              }
+            }
+          })
+        }
       }
+
 
       await replyMessage(replyToken, replyMessages)
       await logCF(userId, text, parsed.cf_code, liveSession.id, true, null)

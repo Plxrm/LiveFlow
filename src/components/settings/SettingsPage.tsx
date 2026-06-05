@@ -1,12 +1,13 @@
 import { useState } from 'react'
-import { Store, CreditCard, MessageCircle, Save, CheckCircle, Truck } from 'lucide-react'
+import { Store, CreditCard, MessageCircle, Save, CheckCircle, Truck, Bot } from 'lucide-react'
 import type { AppSettings } from '../../lib/api/settings'
+import MessageTemplatesManager from './MessageTemplatesManager'
 
 interface SettingsPageProps {
   initialSettings: AppSettings
 }
 
-type TabKey = 'shop' | 'shipping' | 'payment' | 'line'
+type TabKey = 'shop' | 'shipping' | 'payment' | 'line' | 'messages'
 
 export default function SettingsPage({ initialSettings }: SettingsPageProps) {
   const [settings, setSettings] = useState<AppSettings>(initialSettings)
@@ -44,6 +45,7 @@ export default function SettingsPage({ initialSettings }: SettingsPageProps) {
     { key: 'shipping', label: 'ข้อมูลผู้ส่ง (KEX)',   icon: <Truck size={18} /> },
     { key: 'payment',  label: 'การชำระเงิน & จัดส่ง', icon: <CreditCard size={18} /> },
     { key: 'line',     label: 'LINE OA',               icon: <MessageCircle size={18} /> },
+    { key: 'messages', label: 'ข้อความอัตโนมัติ',    icon: <Bot size={18} /> },
   ]
 
   return (
@@ -342,6 +344,13 @@ export default function SettingsPage({ initialSettings }: SettingsPageProps) {
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-red-50/50 focus:bg-white transition-colors resize-none border-red-100"
                 />
               </div>
+            </div>
+          )}
+
+          {/* ─── Tab: ข้อความอัตโนมัติ ──────────────────────────────── */}
+          {activeTab === 'messages' && (
+            <div className="animate-in fade-in slide-in-from-bottom-2 duration-300 w-full">
+              <MessageTemplatesManager />
             </div>
           )}
 

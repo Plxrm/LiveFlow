@@ -2,6 +2,7 @@ import { supabaseAdmin } from '../supabase/admin'
 import { createShipment, trackShipment, cancelShipment } from '../kex/client'
 import { pushMessage } from '../line/client'
 import { getSettings } from './settings'
+import { getTemplatesByStep, buildMessages } from './messages'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -130,17 +131,25 @@ export async function createOrderShipment(orderId: string) {
 
   // ส่ง tracking number ให้ลูกค้าทาง LINE
   if (customer.line_user_id) {
-    await pushMessage(customer.line_user_id as string, [
-      {
-        type: 'text',
-        text:
-          `📦 พัสดุของคุณถูกจัดส่งแล้ว!\n\n` +
-          `🚚 ขนส่ง: KEX Express\n` +
-          `📋 เลขพัสดุ: ${result.con_no}\n` +
-          `📄 ออเดอร์: ${order.order_number}\n\n` +
-          `ติดตามพัสดุ: https://th.kerryexpress.com/th/track/?track=${result.con_no}`
-      }
-    ])
+    const shippedTpls = await getTemplatesByStep('shipped')
+    const shippedMsgs = shippedTpls.length > 0
+      ? buildMessages(shippedTpls, {
+          tracking_number: result.con_no || '',
+          order_number: order.order_number || '',
+          customer_name: (customer.display_name as string) || 'ลูกค้า',
+        })
+      : [
+          {
+            type: 'text',
+            text:
+              `📦 พัสดุของคุณถูกจัดส่งแล้ว!\n\n` +
+              `🚚 ขนส่ง: KEX Express\n` +
+              `📋 เลขพัสดุ: ${result.con_no}\n` +
+              `📄 ออเดอร์: ${order.order_number}\n\n` +
+              `ติดตามพัสดุ: https://th.kerryexpress.com/th/track/?track=${result.con_no}`
+          }
+        ]
+    await pushMessage(customer.line_user_id as string, shippedMsgs)
   }
 
   return shipment
