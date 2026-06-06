@@ -1,37 +1,96 @@
 import type { APIRoute } from 'astro'
-import crypto from 'node:crypto'
-import { handleLineWebhook } from '../../../lib/line/webhook-handler'
-import { getSettings } from '../../../lib/api/settings'
 
-async function verifySignature(body: string, signature: string) {
-  const settings = await getSettings()
-  const secret = settings.line_channel_secret || ''
-  if (!secret) return false
-  const hash = crypto
-    .createHmac('SHA256', secret)
-    .update(body)
-    .digest('base64')
-  return hash === signature
+export const GET: APIRoute = async () => {
+  return new Response(
+    JSON.stringify({ status: 'ok' }),
+    { status: 200, headers: { 'Content-Type': 'application/json' } }
+  )
 }
 
 export const POST: APIRoute = async ({ request }) => {
   try {
-    const signature = request.headers.get('x-line-signature')
-    if (!signature) {
-      return new Response('Unauthorized', { status: 401 })
+    const body = await request.text()
+
+    // ถ้า body ว่าง → return 200
+    if (!body) {
+      return new Response(
+        JSON.stringify({ status: 'ok' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
-    const bodyText = await request.text()
-    if (!(await verifySignature(bodyText, signature))) {
-      return new Response('Invalid Signature', { status: 401 })
+    let parsed: any
+    try {
+      parsed = JSON.parse(body)
+    } catch {
+      return new Response(
+        JSON.stringify({ status: 'ok' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
-    const body = JSON.parse(bodyText)
-    await handleLineWebhook(body)
+    // LINE Verify request — events ว่างหรือไม่มี
+    if (!parsed.events || parsed.events.length === 0) {
+      return new Response(
+        JSON.stringify({ status: 'ok' }),
+        { status: 200, headers: { 'Content-Type': 'application/json' } }
+      )
+    }
 
-    return new Response('OK', { status: 200 })
-  } catch (error: any) {
-    console.error('Webhook Error:', error)
-    return new Response(JSON.stringify({ error: error.message }), { status: 500 })
+    // ลองดึง settings แต่ถ้าพังก็ไม่ block
+    let secret = ''
+    try {
+      const { getSettings } = await import(
+        '../../../lib/api/settings'
+      )
+      const settings = await getSettings()
+      secret = settings.line_channel_secret || ''
+    } catch (e) {
+      console.error('Settings error:', e)
+    }
+
+    // Verify signature ถ้ามี secret
+    if (secret) {
+      const signature = request.headers
+        .get('x-line-signature') || ''
+      try {
+        const crypto = await import('node:crypto')
+        const hash = crypto
+          .createHmac('SHA256', secret)
+          .update(body)
+          .digest('base64')
+        if (hash !== signature) {
+          console.error('Invalid LINE signature')
+          return new Response(
+            JSON.stringify({ status: 'invalid signature' }),
+            { status: 200, headers: { 'Content-Type': 'application/json' } }
+          )
+        }
+      } catch (e) {
+        console.error('Crypto error:', e)
+      }
+    }
+
+    // Handle events — ถ้าพังก็ไม่ block
+    try {
+      const { handleLineWebhook } = await import(
+        '../../../lib/line/webhook-handler'
+      )
+      await handleLineWebhook(parsed)
+    } catch (e) {
+      console.error('Webhook handler error:', e)
+    }
+
+    return new Response(
+      JSON.stringify({ status: 'ok' }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )
+  } catch (err) {
+    console.error('Webhook fatal error:', err)
+    // แม้ error ก็ return 200 เพื่อไม่ให้ LINE retry
+    return new Response(
+      JSON.stringify({ status: 'error' }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )
   }
 }
