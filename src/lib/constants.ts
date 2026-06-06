@@ -1,11 +1,11 @@
 /**
- * Application-wide constants for Pluem Live
+ * Application-wide constants for LiveFlow
  */
 
 // ─── App Info ────────────────────────────────────────────────────────────────
 
-export const APP_NAME = 'Pluem Live'
-export const APP_DESCRIPTION = 'ระบบจัดการ Live Commerce'
+export const APP_NAME = 'LiveFlow'
+export const APP_DESCRIPTION = 'ระบบจัดการร้านค้าไลฟ์สด'
 export const APP_VERSION = '0.1.0'
 
 // ─── Navigation ──────────────────────────────────────────────────────────────

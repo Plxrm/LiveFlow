@@ -129,7 +129,7 @@ export async function updateOrderStatus(id: string, status: string) {
 }
 
 export async function generateOrderNumber() {
-  if (!supabaseAdmin) return 'PLM-000000-000'
+  if (!supabaseAdmin) return 'LF-000000-000'
   try {
     const today = new Date()
     const localDate = new Date(today.getTime() - (today.getTimezoneOffset() * 60000))
@@ -138,14 +138,14 @@ export async function generateOrderNumber() {
     const { count, error } = await supabaseAdmin
       .from('orders')
       .select('*', { count: 'exact', head: true })
-      .ilike('order_number', `PLM-${dateStr}-%`)
+      .ilike('order_number', `LF-${dateStr}-%`)
       
     if (error) throw error
     
     const num = String((count || 0) + 1).padStart(3, '0')
-    return `PLM-${dateStr}-${num}`
+    return `LF-${dateStr}-${num}`
   } catch (error) {
     console.error('Error generating order number:', error)
-    return 'PLM-000000-000'
+    return 'LF-000000-000'
   }
 }

@@ -1,11 +1,12 @@
 ---
 import AdminLayout from '../layouts/AdminLayout.astro'
+import { APP_NAME } from '../lib/constants'
 import CustomersPage from '../components/customers/CustomersPage'
 import { getCustomers } from '../lib/api/customers'
 
 const customers = await getCustomers()
 ---
 
-<AdminLayout title="Customers | Pluem Live">
+<AdminLayout title={`Customers | ${APP_NAME}`}>
   <CustomersPage client:load initialCustomers={customers} />
 </AdminLayout>

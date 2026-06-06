@@ -1,5 +1,6 @@
 ---
 import AdminLayout from '../layouts/AdminLayout.astro'
+import { APP_NAME } from '../lib/constants'
 import DashboardPage from '../components/dashboard/DashboardPage'
 import { getDashboardStats, getRecentOrders, getPendingPayments, getActiveLiveSession } from '../lib/api/dashboard'
 
@@ -9,7 +10,7 @@ const pendingPayments = await getPendingPayments()
 const liveSession = await getActiveLiveSession()
 ---
 
-<AdminLayout title="Dashboard | Pluem Live">
+<AdminLayout title={`Dashboard | ${APP_NAME}`}>
   <DashboardPage
     client:load
     stats={stats}

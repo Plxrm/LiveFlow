@@ -21,7 +21,7 @@ export interface ShopShippingInfo {
 async function getShopShippingInfo(): Promise<ShopShippingInfo> {
   const settings = await getSettings()
   return {
-    shop_name: settings.shop_sender_name || settings.shop_name || 'Pluem Live',
+    shop_name: settings.shop_sender_name || settings.shop_name || 'LiveFlow',
     shop_phone: settings.shop_phone || '0000000000',
     shop_address: settings.shop_address || '',
     shop_subdistrict: settings.shop_subdistrict || '',

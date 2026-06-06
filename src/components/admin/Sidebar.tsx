@@ -1,3 +1,4 @@
+import { useState, useEffect } from 'react'
 import {
   Radio,
   LayoutDashboard,
@@ -5,6 +6,8 @@ import {
   Package2,
   Users,
   Settings,
+  LogOut,
+  CircleUser,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -21,24 +24,36 @@ const BOTTOM_ITEMS = [
 
 interface SidebarProps {
   currentPath?: string
-  /** จำนวน orders ที่ status=paid (พร้อมจัดส่ง) */
   pendingShipments?: number
 }
 
 export default function Sidebar({ currentPath = '/', pendingShipments = 0 }: SidebarProps) {
   const isActive = (href: string) => currentPath === href || currentPath.startsWith(href + '/')
+  const [userEmail, setUserEmail] = useState<string | null>(null)
+  const [loggingOut, setLoggingOut] = useState(false)
+
+  useEffect(() => {
+    fetch('/api/auth/me')
+      .then(r => r.ok ? r.json() : null)
+      .then(d => d?.email && setUserEmail(d.email))
+      .catch(() => {})
+  }, [])
+
+  const handleLogout = async () => {
+    setLoggingOut(true)
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+      window.location.href = '/login'
+    } catch {
+      setLoggingOut(false)
+    }
+  }
 
   return (
     <aside className="hidden md:flex fixed left-0 top-0 h-screen w-[260px] bg-white border-r border-gray-200 flex-col py-6 z-50">
       {/* Brand */}
-      <div className="px-6 mb-6 flex items-center gap-3">
-        <div className="w-10 h-10 rounded-lg bg-blue-600 flex items-center justify-center">
-          <span className="text-white font-bold text-lg">P</span>
-        </div>
-        <div>
-          <h1 className="text-base font-bold text-blue-700 leading-tight">Pluem Admin</h1>
-          <p className="text-[11px] text-gray-400 leading-none">TikTok Live Management</p>
-        </div>
+      <div className="px-6 mb-6 flex items-center justify-center">
+        <img src="/logo.svg" alt="LiveFlow" className="h-32 w-auto" />
       </div>
 
       {/* Main nav */}
@@ -63,12 +78,10 @@ export default function Sidebar({ currentPath = '/', pendingShipments = 0 }: Sid
               />
               <span>{label}</span>
 
-              {/* Live pulse indicator */}
               {href === '/live' && (
                 <span className="ml-auto w-2 h-2 rounded-full bg-red-500 animate-pulse" />
               )}
 
-              {/* Orders: pending shipments badge */}
               {isOrders && pendingShipments > 0 && (
                 <span className="ml-auto min-w-[20px] h-5 px-1.5 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {pendingShipments > 99 ? '99+' : pendingShipments}
@@ -80,7 +93,7 @@ export default function Sidebar({ currentPath = '/', pendingShipments = 0 }: Sid
       </nav>
 
       {/* Bottom nav */}
-      <div className="mt-auto px-2 pt-4 border-t border-gray-100">
+      <div className="mt-auto px-2 pt-4 border-t border-gray-100 flex flex-col gap-1">
         {BOTTOM_ITEMS.map(({ href, label, icon: Icon }) => {
           const active = isActive(href)
           return (
@@ -102,6 +115,22 @@ export default function Sidebar({ currentPath = '/', pendingShipments = 0 }: Sid
             </a>
           )
         })}
+
+        {/* User info + logout */}
+        {userEmail && (
+          <div className="mt-2 mx-1 flex items-center gap-2 px-2 py-2 rounded-lg bg-gray-50 border border-gray-100">
+            <CircleUser size={16} className="text-gray-400 flex-shrink-0" />
+            <span className="text-xs text-gray-500 truncate flex-1 min-w-0">{userEmail}</span>
+            <button
+              onClick={handleLogout}
+              disabled={loggingOut}
+              title="ออกจากระบบ"
+              className="p-1 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded transition-colors flex-shrink-0 disabled:opacity-50"
+            >
+              <LogOut size={14} />
+            </button>
+          </div>
+        )}
       </div>
     </aside>
   )

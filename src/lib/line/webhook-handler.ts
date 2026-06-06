@@ -165,9 +165,10 @@ export async function handleLineWebhook(body: any) {
         .order('key_code', { ascending: true })
         .limit(parsed.quantity)
 
-      // ดึง free_shipping จาก product
+      // ดึง free_shipping + shipping_fee จาก product (shipping_fee เก็บใน products.price)
       const productFreeShipping = (liveProduct.products as any).free_shipping === true
-      const shippingFee = productFreeShipping ? 0 : (settings.shipping_fee || 50)
+      const productShippingFee  = (liveProduct.products as any).price ?? 0
+      const shippingFee = productFreeShipping ? 0 : productShippingFee
 
       // ใช้ราคาจาก key ถ้ามี ไม่งั้น fallback to live_price
       const keyPrice = availableKeys && availableKeys.length > 0

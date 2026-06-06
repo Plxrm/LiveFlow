@@ -11,22 +11,19 @@ export interface AppSettings {
   shop_district: string
   shop_province: string
   shop_zipcode: string
-  // อื่นๆ
+  // LINE OA
   line_channel_id: string
   line_channel_secret: string
+  line_channel_access_token: string
+  // การชำระเงิน
   promptpay_number: string
   promptpay_name: string
-  shipping_fee: number
-  free_shipping_min: number
   auto_confirm_payment: boolean
   auto_ship_on_payment: boolean
-  welcome_message: string
-  cf_success_message: string
-  cf_error_message: string
 }
 
 const defaultSettings: AppSettings = {
-  shop_name: 'Pluem Live',
+  shop_name: 'LiveFlow',
   shop_logo_url: '',
   shop_sender_name: '',
   shop_phone: '',
@@ -37,15 +34,11 @@ const defaultSettings: AppSettings = {
   shop_zipcode: '',
   line_channel_id: '',
   line_channel_secret: '',
+  line_channel_access_token: '',
   promptpay_number: '',
   promptpay_name: '',
-  shipping_fee: 50,
-  free_shipping_min: 500,
   auto_confirm_payment: false,
   auto_ship_on_payment: false,
-  welcome_message: 'ยินดีต้อนรับ! พิมพ์ CF ตามด้วยรหัสสินค้าเพื่อสั่งซื้อ',
-  cf_success_message: 'สั่งซื้อสำเร็จ! กรุณาชำระเงินภายใน 24 ชม.',
-  cf_error_message: 'ขออภัย ไม่พบรหัสสินค้านี้ กรุณาลองใหม่'
 }
 
 export async function getSettings(): Promise<AppSettings> {

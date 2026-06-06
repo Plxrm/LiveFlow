@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Store, CreditCard, MessageCircle, Save, CheckCircle, Truck, Bot } from 'lucide-react'
+import { Store, CreditCard, MessageCircle, Save, CheckCircle, Truck, Bot, Loader2, CheckCircle2, XCircle } from 'lucide-react'
 import type { AppSettings } from '../../lib/api/settings'
 import MessageTemplatesManager from './MessageTemplatesManager'
 
@@ -9,11 +9,22 @@ interface SettingsPageProps {
 
 type TabKey = 'shop' | 'shipping' | 'payment' | 'line' | 'messages'
 
+interface LineBotInfo {
+  displayName: string
+  pictureUrl: string
+  basicId: string
+}
+
 export default function SettingsPage({ initialSettings }: SettingsPageProps) {
   const [settings, setSettings] = useState<AppSettings>(initialSettings)
   const [activeTab, setActiveTab] = useState<TabKey>('shop')
   const [saving, setSaving] = useState(false)
   const [showToast, setShowToast] = useState(false)
+
+  // LINE OA connection test
+  const [testingLine, setTestingLine] = useState(false)
+  const [lineBotInfo, setLineBotInfo] = useState<LineBotInfo | null>(null)
+  const [lineTestError, setLineTestError] = useState<string | null>(null)
 
   const handleSave = async () => {
     setSaving(true)
@@ -40,12 +51,44 @@ export default function SettingsPage({ initialSettings }: SettingsPageProps) {
     setSettings(prev => ({ ...prev, [field]: value }))
   }
 
+  const handleTestLineConnection = async () => {
+    if (!settings.line_channel_access_token) {
+      setLineTestError('กรุณากรอก LINE Channel Access Token ก่อน')
+      setLineBotInfo(null)
+      return
+    }
+    setTestingLine(true)
+    setLineBotInfo(null)
+    setLineTestError(null)
+    try {
+      const res = await fetch('/api/line/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: settings.line_channel_access_token }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setLineBotInfo({
+          displayName: data.displayName,
+          pictureUrl: data.pictureUrl,
+          basicId: data.basicId,
+        })
+      } else {
+        setLineTestError(data.error || `ผิดพลาด (HTTP ${res.status})`)
+      }
+    } catch (e: any) {
+      setLineTestError('ไม่สามารถเชื่อมต่อได้: ' + (e?.message || 'Unknown error'))
+    } finally {
+      setTestingLine(false)
+    }
+  }
+
   const tabs: { key: TabKey; label: string; icon: React.ReactNode }[] = [
-    { key: 'shop',     label: 'ข้อมูลร้านค้า',        icon: <Store size={18} /> },
-    { key: 'shipping', label: 'ข้อมูลผู้ส่ง (KEX)',   icon: <Truck size={18} /> },
-    { key: 'payment',  label: 'การชำระเงิน & จัดส่ง', icon: <CreditCard size={18} /> },
-    { key: 'line',     label: 'LINE OA',               icon: <MessageCircle size={18} /> },
-    { key: 'messages', label: 'ข้อความอัตโนมัติ',    icon: <Bot size={18} /> },
+    { key: 'shop',     label: 'ข้อมูลร้านค้า',      icon: <Store size={18} /> },
+    { key: 'shipping', label: 'ข้อมูลผู้ส่ง (KEX)', icon: <Truck size={18} /> },
+    { key: 'payment',  label: 'การชำระเงิน',         icon: <CreditCard size={18} /> },
+    { key: 'line',     label: 'LINE OA',             icon: <MessageCircle size={18} /> },
+    { key: 'messages', label: 'ข้อความอัตโนมัติ',  icon: <Bot size={18} /> },
   ]
 
   return (
@@ -130,7 +173,7 @@ export default function SettingsPage({ initialSettings }: SettingsPageProps) {
                     type="text"
                     value={settings.shop_sender_name}
                     onChange={e => handleChange('shop_sender_name', e.target.value)}
-                    placeholder="ร้าน Pluem Live"
+                    placeholder="ร้าน LiveFlow"
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
                   />
                 </div>
@@ -211,10 +254,15 @@ export default function SettingsPage({ initialSettings }: SettingsPageProps) {
             </div>
           )}
 
-          {/* ─── Tab: การชำระเงิน & จัดส่ง ────────────────────────────── */}
+          {/* ─── Tab: การชำระเงิน ──────────────────────────────────────── */}
           {activeTab === 'payment' && (
             <div className="flex flex-col gap-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">การชำระเงิน และการจัดส่ง</h2>
+              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">การชำระเงิน</h2>
+
+              <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-xs text-amber-700 flex items-center gap-2">
+                <span>📦</span>
+                <span>ค่าส่งตั้งค่าแยกตามสินค้าแต่ละชิ้นในหน้าคลังสินค้า</span>
+              </div>
 
               <div className="grid grid-cols-2 gap-4">
                 <div className="flex flex-col gap-2">
@@ -232,27 +280,6 @@ export default function SettingsPage({ initialSettings }: SettingsPageProps) {
                     type="text"
                     value={settings.promptpay_name}
                     onChange={e => handleChange('promptpay_name', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-gray-700">ค่าจัดส่งเริ่มต้น (บาท)</label>
-                  <input
-                    type="number"
-                    value={settings.shipping_fee}
-                    onChange={e => handleChange('shipping_fee', Number(e.target.value))}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-gray-700">ขั้นต่ำส่งฟรี (บาท)</label>
-                  <input
-                    type="number"
-                    value={settings.free_shipping_min}
-                    onChange={e => handleChange('free_shipping_min', Number(e.target.value))}
                     className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
                   />
                 </div>
@@ -293,56 +320,98 @@ export default function SettingsPage({ initialSettings }: SettingsPageProps) {
             <div className="flex flex-col gap-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
               <h2 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">LINE Official Account</h2>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-gray-700">LINE Channel ID</label>
-                  <input
-                    type="text"
-                    value={settings.line_channel_id}
-                    onChange={e => handleChange('line_channel_id', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
-                  />
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">LINE Channel ID</label>
+                <input
+                  type="text"
+                  value={settings.line_channel_id}
+                  onChange={e => handleChange('line_channel_id', e.target.value)}
+                  placeholder="1234567890"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">LINE Channel Secret</label>
+                <input
+                  type="password"
+                  value={settings.line_channel_secret}
+                  onChange={e => handleChange('line_channel_secret', e.target.value)}
+                  placeholder="••••••••••••••••••••••••"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
+                />
+              </div>
+
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">LINE Channel Access Token</label>
+                <input
+                  type="password"
+                  value={settings.line_channel_access_token}
+                  onChange={e => handleChange('line_channel_access_token', e.target.value)}
+                  placeholder="••••••••••••••••••••••••"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
+                />
+              </div>
+
+              {/* Test connection button */}
+              <button
+                type="button"
+                onClick={handleTestLineConnection}
+                disabled={testingLine}
+                className="flex items-center justify-center gap-2 w-full py-2.5 border-2 border-green-500 text-green-600 font-semibold text-sm rounded-lg hover:bg-green-50 disabled:opacity-60 transition-colors"
+              >
+                {testingLine ? (
+                  <><Loader2 size={16} className="animate-spin" /> กำลังทดสอบการเชื่อมต่อ...</>
+                ) : (
+                  <><MessageCircle size={16} /> ทดสอบการเชื่อมต่อ</>
+                )}
+              </button>
+
+              {/* Bot info result */}
+              {lineBotInfo && (
+                <div className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-4 animate-in fade-in duration-200">
+                  {lineBotInfo.pictureUrl && (
+                    <img
+                      src={lineBotInfo.pictureUrl}
+                      alt={lineBotInfo.displayName}
+                      className="w-14 h-14 rounded-full border-2 border-green-300 object-cover flex-shrink-0"
+                    />
+                  )}
+                  <div className="flex flex-col gap-0.5">
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 size={16} className="text-green-600" />
+                      <span className="text-sm font-bold text-green-700">เชื่อมต่อสำเร็จ!</span>
+                    </div>
+                    <p className="text-sm font-semibold text-gray-800">{lineBotInfo.displayName}</p>
+                    <p className="text-xs text-gray-500">Basic ID: @{lineBotInfo.basicId}</p>
+                  </div>
                 </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-gray-700">LINE Channel Secret</label>
-                  <input
-                    type="password"
-                    value={settings.line_channel_secret}
-                    onChange={e => handleChange('line_channel_secret', e.target.value)}
-                    placeholder="••••••••••••••••••••••••"
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
-                  />
+              )}
+
+              {/* Error result */}
+              {lineTestError && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-start gap-3 animate-in fade-in duration-200">
+                  <XCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                  <div>
+                    <p className="text-sm font-semibold text-red-700">เชื่อมต่อไม่สำเร็จ</p>
+                    <p className="text-xs text-red-500 mt-0.5">{lineTestError}</p>
+                  </div>
                 </div>
-              </div>
+              )}
 
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-gray-700">ข้อความต้อนรับ (Welcome Message)</label>
-                <textarea
-                  rows={3}
-                  value={settings.welcome_message}
-                  onChange={e => handleChange('welcome_message', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors resize-none"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-gray-700">ข้อความตอบกลับ: CF สำเร็จ</label>
-                <textarea
-                  rows={2}
-                  value={settings.cf_success_message}
-                  onChange={e => handleChange('cf_success_message', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-emerald-50/50 focus:bg-white transition-colors resize-none border-emerald-100"
-                />
-              </div>
-
-              <div className="flex flex-col gap-2">
-                <label className="text-sm font-semibold text-gray-700">ข้อความตอบกลับ: CF ผิดพลาด / สินค้าหมด</label>
-                <textarea
-                  rows={2}
-                  value={settings.cf_error_message}
-                  onChange={e => handleChange('cf_error_message', e.target.value)}
-                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-red-50/50 focus:bg-white transition-colors resize-none border-red-100"
-                />
+              {/* Link to messages tab */}
+              <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-700 flex items-center gap-2">
+                <MessageCircle size={14} />
+                <span>
+                  ตั้งค่าข้อความตอบกลับได้ที่{' '}
+                  <button
+                    type="button"
+                    onClick={() => setActiveTab('messages')}
+                    className="font-semibold underline hover:text-blue-900 transition-colors"
+                  >
+                    tab ข้อความอัตโนมัติ
+                  </button>
+                </span>
               </div>
             </div>
           )}

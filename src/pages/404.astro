@@ -1,0 +1,46 @@
+---
+import { APP_NAME } from '../lib/constants'
+import '../styles/globals.css'
+---
+
+<!doctype html>
+<html lang="th">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
+    <title>404 — ไม่พบหน้าที่ต้องการ | {APP_NAME}</title>
+  </head>
+  <body class="font-sans antialiased bg-gray-50 min-h-screen flex items-center justify-center p-4">
+    <div class="text-center">
+      <!-- Icon -->
+      <img src="/logo.svg" alt="LiveFlow" class="h-20 mx-auto mb-6" />
+
+      <!-- Error code -->
+      <h1 class="text-8xl font-black text-gray-200 leading-none mb-2">404</h1>
+
+      <!-- Message -->
+      <h2 class="text-xl font-bold text-gray-800 mb-2">ไม่พบหน้าที่ต้องการ</h2>
+      <p class="text-sm text-gray-500 mb-8">หน้าที่คุณกำลังมองหาไม่มีอยู่หรืออาจถูกย้ายไปแล้ว</p>
+
+      <!-- Actions -->
+      <div class="flex items-center justify-center gap-3">
+        <a
+          href="/dashboard"
+          class="inline-flex items-center gap-2 px-6 py-2.5 bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold rounded-xl transition-colors shadow-sm"
+        >
+          กลับหน้าหลัก
+        </a>
+        <button
+          onclick="history.back()"
+          class="inline-flex items-center gap-2 px-6 py-2.5 bg-white border border-gray-200 hover:bg-gray-50 text-gray-700 text-sm font-semibold rounded-xl transition-colors"
+        >
+          ย้อนกลับ
+        </button>
+      </div>
+    </div>
+  </body>
+</html>
