@@ -132,39 +132,72 @@ export async function handleLineWebhook(body: any) {
         continue
       }
 
-      const liveProduct = await findLiveProduct(liveSession.id, parsed.cf_code)
-      if (!liveProduct) {
-        const notFoundTpls = await getTemplatesByStep('cf_not_found')
-        const notFoundMsgs = notFoundTpls.length > 0
-          ? buildMessages(notFoundTpls, { cf_code: parsed.cf_code })
-          : [{ type: 'text', text: settings.cf_error_message || `ไม่พบรหัส ${parsed.cf_code} ในไลฟ์นี้` }]
-        await replyMessage(replyToken, notFoundMsgs)
-        await logCF(userId, text, parsed.cf_code, liveSession.id, false, 'product_not_found')
-        continue
+      let liveProduct: any = null
+      let availableKey: any = null
+
+      // ค้นหา product_key ที่ key_code ตรงกับ parsed.cf_code (case insensitive)
+      const { data: keys } = await supabaseAdmin
+        .from('product_keys')
+        .select('*, products(*)')
+        .ilike('key_code', parsed.cf_code)
+        .eq('status', 'available')
+        .limit(10) // fetch เผื่อเช็คว่า product อยู่ใน live นี้ไหม
+
+      if (keys && keys.length > 0) {
+        // หา key ที่ product ของมันอยู่ใน live session นี้
+        for (const k of keys) {
+          const { data: lp } = await supabaseAdmin
+            .from('live_products')
+            .select('*')
+            .eq('live_session_id', liveSession.id)
+            .eq('product_id', k.product_id)
+            .maybeSingle()
+          
+          if (lp) {
+            liveProduct = { ...lp, products: k.products }
+            availableKey = k
+            break
+          }
+        }
       }
 
-      if (liveProduct.products.stock < parsed.quantity) {
+      // ถ้าไม่เจอ key ลองหาจาก live_products.cf_code (backward compatible)
+      if (!liveProduct) {
+        liveProduct = await findLiveProduct(liveSession.id, parsed.cf_code)
+        if (!liveProduct) {
+          const notFoundTpls = await getTemplatesByStep('cf_not_found')
+          const notFoundMsgs = notFoundTpls.length > 0
+            ? buildMessages(notFoundTpls, { cf_code: parsed.cf_code })
+            : [{ type: 'text', text: settings.cf_error_message || `ไม่พบรหัส ${parsed.cf_code} ในไลฟ์นี้` }]
+          await replyMessage(replyToken, notFoundMsgs)
+          await logCF(userId, text, parsed.cf_code, liveSession.id, false, 'product_not_found')
+          continue
+        }
+        
+        // ถ้าหาเจอแต่ liveProduct, ให้ลองหา availableKey อันไหนก็ได้ของสินค้านั้น
+        const { data: firstKey } = await supabaseAdmin
+          .from('product_keys')
+          .select('*, products(*)')
+          .eq('product_id', liveProduct.products.id)
+          .eq('status', 'available')
+          .order('key_code', { ascending: true })
+          .limit(1)
+          .maybeSingle()
+        if (firstKey) availableKey = firstKey
+      }
+
+      if (!availableKey && liveProduct.products.stock < 1) {
         const outOfStockTpls = await getTemplatesByStep('cf_out_of_stock')
         const outOfStockMsgs = outOfStockTpls.length > 0
           ? buildMessages(outOfStockTpls, {
               product_name: liveProduct.products.name,
               quantity: String(liveProduct.products.stock),
             })
-          : [{ type: 'text', text: `ขออภัย ${liveProduct.products.name} เหลือเพียง ${liveProduct.products.stock} ชิ้น` }]
+          : [{ type: 'text', text: `ขออภัย ${liveProduct.products.name} สินค้าหมดแล้ว` }]
         await replyMessage(replyToken, outOfStockMsgs)
         await logCF(userId, text, parsed.cf_code, liveSession.id, false, 'out_of_stock')
         continue
       }
-
-      // ─── Reserve product_keys ──────────────────────────────────────────────
-      // หา available keys เรียงตาม key_code จำนวนตาม quantity
-      const { data: availableKeys } = await supabaseAdmin
-        .from('product_keys')
-        .select('id, key_code, price')
-        .eq('product_id', liveProduct.products.id)
-        .eq('status', 'available')
-        .order('key_code', { ascending: true })
-        .limit(parsed.quantity)
 
       // ดึง free_shipping + shipping_fee จาก product (shipping_fee เก็บใน products.price)
       const productFreeShipping = (liveProduct.products as any).free_shipping === true
@@ -172,14 +205,13 @@ export async function handleLineWebhook(body: any) {
       const shippingFee = productFreeShipping ? 0 : productShippingFee
 
       // ใช้ราคาจาก key ถ้ามี ไม่งั้น fallback to live_price
-      const keyPrice = availableKeys && availableKeys.length > 0
-        ? (availableKeys[0] as any).price ?? (liveProduct.live_price || liveProduct.products.price)
+      const keyPrice = availableKey
+        ? (availableKey.price ?? (liveProduct.live_price || liveProduct.products.price))
         : (liveProduct.live_price || liveProduct.products.price)
       const price = keyPrice
 
-
       const orderNumber = await generateOrderNumber()
-      const total = (price * parsed.quantity) + shippingFee
+      const total = price + shippingFee
 
       const { data: order, error: orderError } = await supabaseAdmin.from('orders').insert([{
         order_number: orderNumber,
@@ -200,20 +232,20 @@ export async function handleLineWebhook(body: any) {
         product_id: liveProduct.products.id,
         product_name: liveProduct.products.name,
         price: price,
-        quantity: parsed.quantity
+        quantity: 1
       }])
 
-      if (!availableKeys || availableKeys.length < parsed.quantity) {
+      if (!availableKey) {
         // ถ้า keys ไม่พอ (fallback: ใช้ stock ปกติ)
         await supabaseAdmin.from('products').update({
-          stock: Math.max(0, liveProduct.products.stock - parsed.quantity)
+          stock: Math.max(0, liveProduct.products.stock - 1)
         }).eq('id', liveProduct.products.id)
       } else {
-        const keyIds = availableKeys.map(k => k.id)
         await supabaseAdmin
           .from('product_keys')
           .update({ status: 'reserved', order_id: order.id })
-          .in('id', keyIds)
+          .eq('id', availableKey.id)
+        
         // อัปเดต stock จาก available keys ที่เหลือ
         const { count } = await supabaseAdmin
           .from('product_keys')
@@ -227,9 +259,7 @@ export async function handleLineWebhook(body: any) {
       }
 
       // ชื่อ key ที่ reserve ได้
-      const reservedKeyCode = availableKeys && availableKeys.length > 0
-        ? (availableKeys[0] as any).key_code
-        : null
+      const reservedKeyCode = availableKey ? availableKey.key_code : null
 
       const shippingText = productFreeShipping ? 'ฟรี!' : `฿${shippingFee}`
 
@@ -240,7 +270,7 @@ export async function handleLineWebhook(body: any) {
       if (cfSuccessTpls.length > 0) {
         replyMessages = buildMessages(cfSuccessTpls, {
           product_name: liveProduct.products.name + (reservedKeyCode ? ` — ${reservedKeyCode}` : ''),
-          quantity: String(parsed.quantity),
+          quantity: '1',
           price: price.toLocaleString(),
           total: total.toLocaleString(),
           order_number: orderNumber,
