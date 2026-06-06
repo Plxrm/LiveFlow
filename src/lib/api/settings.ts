@@ -44,9 +44,60 @@ const defaultSettings: AppSettings = {
 }
 
 export async function getSettings(): Promise<AppSettings> {
-  return defaultSettings
+  if (!supabaseAdmin) return defaultSettings
+
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('settings')
+      .select('key, value')
+
+    if (error || !data || data.length === 0) {
+      return defaultSettings
+    }
+
+    // แปลง key-value rows → object
+    const settings = { ...defaultSettings }
+    for (const row of data) {
+      const key = row.key as keyof AppSettings
+      if (key in settings) {
+        try {
+          settings[key] = JSON.parse(row.value) as any
+        } catch {
+          settings[key] = row.value as any
+        }
+      }
+    }
+    return settings
+  } catch (err) {
+    console.error('getSettings error:', err)
+    return defaultSettings
+  }
 }
 
-export async function updateSettings(data: Partial<AppSettings>): Promise<AppSettings> {
-  return { ...defaultSettings, ...data }
+export async function updateSettings(
+  data: Partial<AppSettings>
+): Promise<AppSettings> {
+  if (!supabaseAdmin) return { ...defaultSettings, ...data }
+
+  try {
+    // upsert แต่ละ key
+    for (const [key, value] of Object.entries(data)) {
+      await supabaseAdmin
+        .from('settings')
+        .upsert(
+          {
+            key: key,
+            value: JSON.stringify(value),
+            updated_at: new Date().toISOString()
+          },
+          { onConflict: 'key' }
+        )
+    }
+
+    // return settings ล่าสุด
+    return await getSettings()
+  } catch (err) {
+    console.error('updateSettings error:', err)
+    return { ...defaultSettings, ...data }
+  }
 }
