@@ -1,4 +1,5 @@
-import { supabaseAdmin } from '../supabase/admin'
+import { getSupabaseAdmin } from '../supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 
 export interface ProductWithKeys {
   id: string

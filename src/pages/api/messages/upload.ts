@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
-import { supabaseAdmin } from '../../../lib/supabase/admin'
+import { getSupabaseAdmin } from '../../../lib/supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 
 export const POST: APIRoute = async ({ request }) => {
   if (!supabaseAdmin) {

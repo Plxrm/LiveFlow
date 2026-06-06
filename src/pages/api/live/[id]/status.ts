@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { updateLiveSessionStatus } from '../../../../lib/api/live'
-import { supabaseAdmin } from '../../../../lib/supabase/admin'
+import { getSupabaseAdmin } from '../../../../lib/supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 
 export const PUT: APIRoute = async ({ params, request }) => {
   if (!supabaseAdmin) {

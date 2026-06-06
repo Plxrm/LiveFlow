@@ -1,4 +1,5 @@
-import { supabaseAdmin } from '../supabase/admin'
+import { getSupabaseAdmin } from '../supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 import { parseCFMessage } from './cf-parser'
 import { replyMessage, pushMessage, getProfile, getMessageContent } from './client'
 import { generateOrderNumber } from '../api/orders'

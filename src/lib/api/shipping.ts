@@ -1,4 +1,5 @@
-import { supabaseAdmin } from '../supabase/admin'
+import { getSupabaseAdmin } from '../supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 import { createShipment, trackShipment, cancelShipment } from '../kex/client'
 import { pushMessage } from '../line/client'
 import { getSettings } from './settings'

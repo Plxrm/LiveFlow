@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { deleteProductKey } from '../../../../lib/api/products'
-import { supabaseAdmin } from '../../../../lib/supabase/admin'
+import { getSupabaseAdmin } from '../../../../lib/supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 
 export const PATCH: APIRoute = async ({ params, request }) => {
   if (!supabaseAdmin) {

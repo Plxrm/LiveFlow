@@ -1,4 +1,5 @@
-import { supabaseAdmin } from '../supabase/admin'
+import { getSupabaseAdmin } from '../supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 
 export async function getDashboardStats() {
   const defaultStats = { totalOrders: 0, pendingOrders: 0, todayRevenue: 0, totalCustomers: 0 }

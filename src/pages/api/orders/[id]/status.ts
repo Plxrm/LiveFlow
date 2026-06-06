@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { updateOrderStatus } from '../../../../lib/api/orders'
-import { supabaseAdmin } from '../../../../lib/supabase/admin'
+import { getSupabaseAdmin } from '../../../../lib/supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 import { markOrderKeysSold, releaseOrderKeys } from '../../../../lib/line/webhook-handler'
 import { pushMessage } from '../../../../lib/line/client'
 import { getTemplatesByStep, buildMessages } from '../../../../lib/api/messages'

@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { bulkDeleteProductKeys } from '../../../../../lib/api/products'
-import { supabaseAdmin } from '../../../../../lib/supabase/admin'
+import { getSupabaseAdmin } from '../../../../../lib/supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 
 export const POST: APIRoute = async ({ params, request }) => {
   if (!supabaseAdmin) {

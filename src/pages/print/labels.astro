@@ -4,7 +4,8 @@
  * หน้าพิมพ์ label — layout เปล่า ไม่มี sidebar/header
  * Auto-print เมื่อโหลดเสร็จ
  */
-import { supabaseAdmin } from '../../lib/supabase/admin'
+import { getSupabaseAdmin } from '../../lib/supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 import ShippingLabel from '../../components/orders/ShippingLabel'
 import { getSettings } from '../../lib/api/settings'
 

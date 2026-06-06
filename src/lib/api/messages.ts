@@ -1,4 +1,5 @@
-import { supabaseAdmin } from '../supabase/admin'
+import { getSupabaseAdmin } from '../supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 
 // ─── ดึง templates ทั้งหมด group by step ─────────────────────────────────────
 

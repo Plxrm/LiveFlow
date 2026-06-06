@@ -1,5 +1,6 @@
 import type { APIRoute } from 'astro'
-import { supabaseAdmin } from '../../../../lib/supabase/admin'
+import { getSupabaseAdmin } from '../../../../lib/supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 import { pushMessage } from '../../../../lib/line/client'
 import { getTemplatesByStep, buildMessages } from '../../../../lib/api/messages'
 

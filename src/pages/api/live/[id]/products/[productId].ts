@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 import { removeProductFromLive } from '../../../../../lib/api/live'
-import { supabaseAdmin } from '../../../../../lib/supabase/admin'
+import { getSupabaseAdmin } from '../../../../../lib/supabase/admin'
+const supabaseAdmin = getSupabaseAdmin()
 
 export const DELETE: APIRoute = async ({ params }) => {
   if (!supabaseAdmin) {
