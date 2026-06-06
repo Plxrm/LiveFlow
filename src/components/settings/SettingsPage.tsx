@@ -247,7 +247,7 @@ export default function SettingsPage({ initialSettings }: SettingsPageProps) {
                 </div>
               </div>
 
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-xs text-blue-700">
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 text-xs text-blue-700 mt-4">
                 <strong>💡 หมายเหตุ:</strong> ตั้งค่า KEX credentials ใน <code className="bg-blue-100 px-1 rounded">.env.local</code><br/>
                 <code>KEX_APP_KEY</code>, <code>KEX_APP_ID</code>, <code>KEX_MERCHANT_ID</code>, <code>KEX_ENV</code> (poc / production)
               </div>

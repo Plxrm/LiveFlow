@@ -1,9 +1,11 @@
 import type { APIRoute } from 'astro'
 import crypto from 'node:crypto'
 import { handleLineWebhook } from '../../../lib/line/webhook-handler'
+import { getSettings } from '../../../lib/api/settings'
 
-function verifySignature(body: string, signature: string) {
-  const secret = import.meta.env.LINE_CHANNEL_SECRET
+async function verifySignature(body: string, signature: string) {
+  const settings = await getSettings()
+  const secret = settings.line_channel_secret || ''
   if (!secret) return false
   const hash = crypto
     .createHmac('SHA256', secret)
@@ -20,7 +22,7 @@ export const POST: APIRoute = async ({ request }) => {
     }
 
     const bodyText = await request.text()
-    if (!verifySignature(bodyText, signature)) {
+    if (!(await verifySignature(bodyText, signature))) {
       return new Response('Invalid Signature', { status: 401 })
     }
 

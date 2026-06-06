@@ -11,6 +11,7 @@ export interface AppSettings {
   shop_district: string
   shop_province: string
   shop_zipcode: string
+
   // LINE OA
   line_channel_id: string
   line_channel_secret: string
@@ -32,6 +33,7 @@ const defaultSettings: AppSettings = {
   shop_district: '',
   shop_province: '',
   shop_zipcode: '',
+
   line_channel_id: '',
   line_channel_secret: '',
   line_channel_access_token: '',
