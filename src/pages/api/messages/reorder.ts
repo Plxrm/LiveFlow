@@ -1,5 +1,5 @@
 import type { APIRoute } from 'astro'
-import { reorderTemplates } from '../../../../lib/api/messages'
+import { reorderTemplates } from '../../../lib/api/messages'
 
 export const PUT: APIRoute = async ({ request }) => {
   try {
