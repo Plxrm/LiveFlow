@@ -73,6 +73,7 @@ export async function createOrderShipment(orderId: string) {
 
   // เช็ค KEX env
   const appKey = import.meta.env.KEX_APP_KEY
+    || process.env.KEX_APP_KEY
   if (!appKey) {
     return { error: 'KEX API ยังไม่ได้ตั้งค่า' }
   }
