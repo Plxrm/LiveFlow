@@ -1,6 +1,7 @@
 import type { APIRoute } from 'astro'
 
-export const PUT: APIRoute = async ({ params, request }) => {
+export const PUT: APIRoute = async (context) => {
+  const { params, request } = context
   try {
     const { getSupabaseAdmin } = await import('../../../../lib/supabase/admin')
     const supabaseAdmin = getSupabaseAdmin()
@@ -121,8 +122,12 @@ export const PUT: APIRoute = async ({ params, request }) => {
           try {
             const settings = await getSettings()
             if (settings.auto_ship_on_payment) {
+              // ดึง runtime env จาก Cloudflare
+              const runtimeEnv = (context.locals as any)?.runtime?.env || {}
+              const { getKexConfig } = await import('../../../../lib/kex/get-config')
+              const kexConfig = getKexConfig(runtimeEnv)
               const { createOrderShipment } = await import('../../../../lib/api/shipping')
-              await createOrderShipment(order.id)
+              await createOrderShipment(order.id, kexConfig)
             }
           } catch (shipErr) {
             console.error('Auto-ship error:', shipErr)

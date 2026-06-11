@@ -1,10 +1,16 @@
 import type { APIRoute } from 'astro'
 import { cancelOrderShipment } from '../../../../lib/api/shipping'
 
-export const POST: APIRoute = async ({ params }) => {
+export const POST: APIRoute = async (context) => {
   try {
-    const shipmentId = params.id as string
-    const success = await cancelOrderShipment(shipmentId)
+    const shipmentId = context.params.id as string
+
+    // ดึง runtime env จาก Cloudflare
+    const runtimeEnv = (context.locals as any)?.runtime?.env || {}
+    const { getKexConfig } = await import('../../../../lib/kex/get-config')
+    const kexConfig = getKexConfig(runtimeEnv)
+
+    const success = await cancelOrderShipment(shipmentId, kexConfig)
 
     if (!success) {
       return new Response(JSON.stringify({ error: 'ยกเลิกพัสดุไม่สำเร็จ' }), { status: 400 })

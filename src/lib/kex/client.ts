@@ -1,17 +1,25 @@
 const KEX_POC_URL = 'https://poc-rd.th.kex-express.com/easyship-cust-api/api'
 const KEX_PROD_URL = 'https://cms-api.th.kex-express.com/easyship-customer-api/api'
 
-function getBaseUrl() {
-  const env = import.meta.env.PUBLIC_KEX_ENV || 'poc'
+// ─── Config type ──────────────────────────────────────────────────────────────
+
+export interface KexConfig {
+  appKey: string
+  appId: string
+  merchantId: string
+  env: string
+}
+
+function getBaseUrl(env: string) {
   return env === 'production' ? KEX_PROD_URL : KEX_POC_URL
 }
 
-function getHeaders() {
+function getHeaders(config: KexConfig) {
   return {
     'Content-Type': 'application/json; charset=UTF8',
-    'app_key': import.meta.env.PUBLIC_KEX_APP_KEY || '',
-    'app_id': import.meta.env.PUBLIC_KEX_APP_ID || '',
-    'merchant_id': import.meta.env.PUBLIC_KEX_MERCHANT_ID || ''
+    'app_key': config.appKey,
+    'app_id': config.appId,
+    'merchant_id': config.merchantId
   }
 }
 
@@ -72,20 +80,26 @@ export interface TrackingResult {
 // ─── 1. สร้าง Shipment ───────────────────────────────────────────────────────
 
 export async function createShipment(
-  params: CreateShipmentParams
+  params: CreateShipmentParams,
+  config: KexConfig
 ): Promise<ShipmentResponse | null> {
   try {
+    if (!config.appKey) {
+      console.error('KEX: No app_key configured')
+      return null
+    }
     const res = await fetch(
-      `${getBaseUrl()}/v3/shipment_info`,
+      `${getBaseUrl(config.env)}/v3/shipment_info`,
       {
         method: 'POST',
-        headers: getHeaders(),
+        headers: getHeaders(config),
         body: JSON.stringify({
           req: { shipment: params }
         })
       }
     )
     const data = await res.json()
+    console.log('KEX response:', JSON.stringify(data))
     const shipment = data?.res?.shipment
     if (shipment?.status_code === '000') {
       return shipment
@@ -101,14 +115,15 @@ export async function createShipment(
 // ─── 2. ติดตามสถานะ ──────────────────────────────────────────────────────────
 
 export async function trackShipment(
-  trackingNumbers: string[]
+  trackingNumbers: string[],
+  config: KexConfig
 ): Promise<TrackingResult[]> {
   try {
     const res = await fetch(
-      `${getBaseUrl()}/v1/shipment_tracking`,
+      `${getBaseUrl(config.env)}/v1/shipment_tracking`,
       {
         method: 'POST',
-        headers: getHeaders(),
+        headers: getHeaders(config),
         body: JSON.stringify({
           language: 'th',
           trackingNo: trackingNumbers
@@ -129,14 +144,15 @@ export async function trackShipment(
 // ─── 3. ยกเลิก Shipment ──────────────────────────────────────────────────────
 
 export async function cancelShipment(
-  conNo: string
+  conNo: string,
+  config: KexConfig
 ): Promise<boolean> {
   try {
     const res = await fetch(
-      `${getBaseUrl()}/v1/shipment_cancel`,
+      `${getBaseUrl(config.env)}/v1/shipment_cancel`,
       {
         method: 'POST',
-        headers: getHeaders(),
+        headers: getHeaders(config),
         body: JSON.stringify({ con_no: conNo })
       }
     )

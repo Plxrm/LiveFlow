@@ -1,11 +1,31 @@
 import type { APIRoute } from 'astro'
 
-export const POST: APIRoute = async ({ params }) => {
+export const POST: APIRoute = async (context) => {
   try {
+    const { params } = context
     const { getSupabaseAdmin } = await import('../../../../lib/supabase/admin')
     const supabaseAdmin = getSupabaseAdmin()
     if (!supabaseAdmin) {
       return new Response(JSON.stringify({ error: 'DB not configured' }), { status: 503, headers: { 'Content-Type': 'application/json' } })
+    }
+
+    // ดึง runtime env จาก Cloudflare
+    const runtimeEnv = (context.locals as any)?.runtime?.env || {}
+    const { getKexConfig } = await import('../../../../lib/kex/get-config')
+    const kexConfig = getKexConfig(runtimeEnv)
+
+    console.log('KEX config check:', {
+      hasAppKey: !!kexConfig.appKey,
+      hasAppId: !!kexConfig.appId,
+      hasMerchantId: !!kexConfig.merchantId,
+      env: kexConfig.env
+    })
+
+    if (!kexConfig.appKey) {
+      return new Response(
+        JSON.stringify({ error: 'KEX API ยังไม่ได้ตั้งค่า' }),
+        { status: 400, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
     // ดึง order + customer
@@ -29,7 +49,7 @@ export const POST: APIRoute = async ({ params }) => {
     }
 
     const customer = order.customers
-    
+
     // เช็คที่อยู่ครบ
     if (!customer) {
       return new Response(JSON.stringify({ error: 'ไม่พบข้อมูลลูกค้า' }), { status: 400, headers: { 'Content-Type': 'application/json' } })
@@ -62,9 +82,9 @@ export const POST: APIRoute = async ({ params }) => {
       zipcode
     })
 
-    // เรียก createOrderShipment
+    // เรียก createOrderShipment พร้อม kexConfig
     const { createOrderShipment } = await import('../../../../lib/api/shipping')
-    const result = await createOrderShipment(order.id)
+    const result = await createOrderShipment(order.id, kexConfig)
 
     console.log('Ship result:', result)
 

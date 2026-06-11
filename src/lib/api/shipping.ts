@@ -1,6 +1,7 @@
 import { getSupabaseAdmin } from '../supabase/admin'
 const supabaseAdmin = getSupabaseAdmin()
 import { createShipment, trackShipment, cancelShipment } from '../kex/client'
+import type { KexConfig } from '../kex/client'
 import { pushMessage } from '../line/client'
 import { getSettings } from './settings'
 import { getTemplatesByStep, buildMessages } from './messages'
@@ -44,7 +45,7 @@ export function hasCompleteAddress(customer: {
 
 // ─── 1. สร้าง Shipment อัตโนมัติ ─────────────────────────────────────────────
 
-export async function createOrderShipment(orderId: string) {
+export async function createOrderShipment(orderId: string, kexConfig: KexConfig) {
   if (!supabaseAdmin) return null
 
   // ดึง order + customer + order_items
@@ -71,9 +72,8 @@ export async function createOrderShipment(orderId: string) {
   // ดึงข้อมูลร้านค้า (ผู้ส่ง)
   const shopInfo = await getShopShippingInfo()
 
-  // เช็ค KEX env
-  const appKey = import.meta.env.PUBLIC_KEX_APP_KEY
-  if (!appKey) {
+  // เช็ค KEX config
+  if (!kexConfig.appKey) {
     return { error: 'KEX API ยังไม่ได้ตั้งค่า' }
   }
 
@@ -118,7 +118,7 @@ export async function createOrderShipment(orderId: string) {
     cod_amount: 0,
     ref_no: order.order_number,
     package: packages
-  })
+  }, kexConfig)
 
   if (!result) {
     return { error: 'ไม่สามารถสร้างพัสดุได้' }
@@ -177,7 +177,7 @@ export async function createOrderShipment(orderId: string) {
 
 // ─── 2. ติดตามสถานะพัสดุ ─────────────────────────────────────────────────────
 
-export async function updateShipmentStatus(shipmentId: string) {
+export async function updateShipmentStatus(shipmentId: string, kexConfig: KexConfig) {
   if (!supabaseAdmin) return null
 
   const { data: shipmentRaw } = await supabaseAdmin
@@ -189,7 +189,7 @@ export async function updateShipmentStatus(shipmentId: string) {
   const shipment = shipmentRaw as any
   if (!shipment?.tracking_number) return null
 
-  const results = await trackShipment([shipment.tracking_number])
+  const results = await trackShipment([shipment.tracking_number], kexConfig)
   if (results.length === 0) return null
 
   const latest = results[0]
@@ -247,7 +247,7 @@ export async function updateShipmentStatus(shipmentId: string) {
 
 // ─── 3. ยกเลิกพัสดุ ──────────────────────────────────────────────────────────
 
-export async function cancelOrderShipment(shipmentId: string): Promise<boolean> {
+export async function cancelOrderShipment(shipmentId: string, kexConfig: KexConfig): Promise<boolean> {
   if (!supabaseAdmin) return false
 
   const { data: shipmentRaw2 } = await supabaseAdmin
@@ -259,7 +259,7 @@ export async function cancelOrderShipment(shipmentId: string): Promise<boolean> 
   const shipment2 = shipmentRaw2 as any
   if (!shipment2?.kex_con_no) return false
 
-  const success = await cancelShipment(shipment2.kex_con_no)
+  const success = await cancelShipment(shipment2.kex_con_no, kexConfig)
 
   if (success) {
     await supabaseAdmin
