@@ -79,14 +79,19 @@ export interface TrackingResult {
 
 // ─── 1. สร้าง Shipment ───────────────────────────────────────────────────────
 
+export type ShipmentResult =
+  | ShipmentResponse
+  | { error: true; status_code?: string; status_desc?: string }
+  | null
+
 export async function createShipment(
   params: CreateShipmentParams,
   config: KexConfig
-): Promise<ShipmentResponse | null> {
+): Promise<ShipmentResult> {
   try {
     if (!config.appKey) {
       console.error('KEX: No app_key configured')
-      return null
+      return { error: true, status_code: 'NO_KEY', status_desc: 'app_key ไม่ถูกตั้งค่า' }
     }
     const res = await fetch(
       `${getBaseUrl(config.env)}/v3/shipment_info`,
@@ -99,16 +104,20 @@ export async function createShipment(
       }
     )
     const data = await res.json()
-    console.log('KEX response:', JSON.stringify(data))
+    console.log('KEX full response:', JSON.stringify(data))
     const shipment = data?.res?.shipment
     if (shipment?.status_code === '000') {
       return shipment
     }
-    console.error('KEX create error:', shipment)
-    return null
+    console.error('KEX error code:', shipment?.status_code, 'desc:', shipment?.status_desc)
+    return {
+      error: true,
+      status_code: shipment?.status_code,
+      status_desc: shipment?.status_desc
+    }
   } catch (err) {
     console.error('KEX create failed:', err)
-    return null
+    return { error: true, status_code: 'EXCEPTION', status_desc: String(err) }
   }
 }
 

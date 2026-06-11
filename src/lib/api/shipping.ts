@@ -1,7 +1,7 @@
 import { getSupabaseAdmin } from '../supabase/admin'
 const supabaseAdmin = getSupabaseAdmin()
 import { createShipment, trackShipment, cancelShipment } from '../kex/client'
-import type { KexConfig } from '../kex/client'
+import type { KexConfig, ShipmentResult } from '../kex/client'
 import { pushMessage } from '../line/client'
 import { getSettings } from './settings'
 import { getTemplatesByStep, buildMessages } from './messages'
@@ -99,7 +99,7 @@ export async function createOrderShipment(orderId: string, kexConfig: KexConfig)
   }))
 
   // เรียก KEX API สร้าง shipment
-  const result = await createShipment({
+  const shipmentParams = {
     s_name: shopInfo.shop_name,
     s_phone: shopInfo.shop_phone,
     s_address: shopInfo.shop_address,
@@ -118,10 +118,27 @@ export async function createOrderShipment(orderId: string, kexConfig: KexConfig)
     cod_amount: 0,
     ref_no: order.order_number,
     package: packages
-  }, kexConfig)
+  }
 
-  if (!result) {
-    return { error: 'ไม่สามารถสร้างพัสดุได้' }
+  console.log('KEX shipment params:', JSON.stringify({
+    s_name: shipmentParams.s_name,
+    s_phone: shipmentParams.s_phone,
+    s_address: shipmentParams.s_address,
+    s_zipcode: shipmentParams.s_zipcode,
+    r_name: shipmentParams.r_name,
+    r_phone: shipmentParams.r_phone,
+    r_address: shipmentParams.r_address,
+    r_subdistrict: shipmentParams.r_subdistrict,
+    r_zipcode: shipmentParams.r_zipcode
+  }, null, 2))
+
+  const result = await createShipment(shipmentParams, kexConfig)
+  console.log('KEX result:', JSON.stringify(result))
+
+  if (!result || (result as any).error) {
+    const r = result as any
+    const kexError = r?.status_desc || 'ไม่ทราบสาเหตุ'
+    return { error: `KEX: ${kexError} (code: ${r?.status_code || 'N/A'})` }
   }
 
   // บันทึกลง shipments table
