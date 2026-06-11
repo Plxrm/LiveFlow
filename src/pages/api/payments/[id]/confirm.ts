@@ -1,112 +1,104 @@
 import type { APIRoute } from 'astro'
-import { getSupabaseAdmin } from '../../../../lib/supabase/admin'
-import { createOrderShipment, hasCompleteAddress } from '../../../../lib/api/shipping'
-import { pushMessage } from '../../../../lib/line/client'
-import { getSettings } from '../../../../lib/api/settings'
-import { getTemplatesByStep, buildMessages } from '../../../../lib/api/messages'
 
 export const PUT: APIRoute = async ({ params }) => {
   try {
+    console.log('Confirm payment:', params.id)
+
+    const { getSupabaseAdmin } = await import(
+      '../../../../lib/supabase/admin'
+    )
     const supabaseAdmin = getSupabaseAdmin()
+
     if (!supabaseAdmin) {
+      console.error('Supabase not configured')
       return new Response(
         JSON.stringify({ error: 'DB not configured' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       )
     }
 
-    const id = params.id as string
-
-    // 1. ยืนยัน payment
-    const { data: payment, error } = await supabaseAdmin
+    // อัปเดต payment status
+    const { data: payment, error: payError } = await supabaseAdmin
       .from('payments')
-      .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
-      .eq('id', id)
-      .select()
+      .update({
+        status: 'confirmed',
+        confirmed_at: new Date().toISOString()
+      })
+      .eq('id', params.id)
+      .select('*, orders(id, order_number)')
       .single()
 
-    if (error) {
+    console.log('Payment update:', { payment, payError })
+
+    if (payError) {
       return new Response(
-        JSON.stringify({ error: error.message }),
+        JSON.stringify({ error: payError.message }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       )
     }
 
-    if (!payment || !payment.order_id) {
-      return new Response(JSON.stringify({ success: true }), {
-        status: 200,
-        headers: { 'Content-Type': 'application/json' }
-      })
+    // อัปเดต order status → paid
+    if ((payment as any)?.orders?.id) {
+      const { error: orderError } = await supabaseAdmin
+        .from('orders')
+        .update({ status: 'paid' })
+        .eq('id', (payment as any).orders.id)
+
+      console.log('Order update:', { orderError })
     }
 
-    // 2. อัปเดต order → paid
-    await supabaseAdmin
-      .from('orders')
-      .update({ status: 'paid' })
-      .eq('id', payment.order_id)
-
-    // 3. ดึง customer เพื่อเช็คที่อยู่
-    const { data: order } = await supabaseAdmin
-      .from('orders')
-      .select('*, customers(*)')
-      .eq('id', payment.order_id)
-      .single()
-
-    const customer = (order as any)?.customers
-
-    // 4. ดึง settings เช็ค auto_ship_on_payment
+    // ส่ง LINE แจ้งลูกค้า (ถ้าพังก็ไม่ block)
     try {
-      const settings = await getSettings()
+      const { getSettings } = await import('../../../../lib/api/settings')
+      const { getTemplatesByStep, buildMessages } = await import('../../../../lib/api/messages')
+      const { pushMessage } = await import('../../../../lib/line/client')
+      const { createOrderShipment, hasCompleteAddress } = await import('../../../../lib/api/shipping')
 
-      if (settings.auto_ship_on_payment && customer) {
-        if (hasCompleteAddress(customer)) {
-          // ─── มีที่อยู่ครบ → สร้างพัสดุอัตโนมัติ ───────────────────
-          const shipResult = await createOrderShipment(payment.order_id)
-          if (shipResult && !('error' in shipResult)) {
-            console.log('Auto-ship created:', (shipResult as any).tracking_number)
-          } else {
-            console.error('Auto-ship failed:', shipResult)
-          }
-        } else if (customer.line_user_id) {
-          // ─── ไม่มีที่อยู่ → ส่ง LINE ถามที่อยู่ ────────────────────
-          try {
-            const checkoutUrl = import.meta.env.PUBLIC_CHECKOUT_URL
-              || import.meta.env.PUBLIC_SUPABASE_URL?.replace('supabase.co', 'vercel.app')
-              || ''
+      const settings = await getSettings()
+      const orderId = (payment as any)?.orders?.id
+
+      if (orderId) {
+        const { data: order } = await supabaseAdmin
+          .from('orders')
+          .select('*, customers(*)')
+          .eq('id', orderId)
+          .single()
+
+        const customer = (order as any)?.customers
+
+        if (settings.auto_ship_on_payment && customer) {
+          if (hasCompleteAddress(customer)) {
+            const shipResult = await createOrderShipment(orderId)
+            console.log('Auto-ship result:', shipResult)
+          } else if (customer.line_user_id) {
+            const checkoutUrl = import.meta.env.PUBLIC_CHECKOUT_URL || ''
             const confirmedTpls = await getTemplatesByStep('payment_confirmed')
-            const confirmedMsgs = confirmedTpls.length > 0
+            const msgs = confirmedTpls.length > 0
               ? buildMessages(confirmedTpls, {
-                  order_number: order?.order_number || '',
-                  amount: String(payment.amount || ''),
-                  customer_name: (customer as any).display_name || 'ลูกค้า',
+                  order_number: (order as any)?.order_number || '',
+                  amount: String((payment as any)?.amount || ''),
+                  customer_name: customer.display_name || 'ลูกค้า',
                 })
-              : [
-                  {
-                    type: 'text',
-                    text:
-                      `✅ ยืนยันการชำระเงินแล้ว!\n\n` +
-                      `กรุณากรอกที่อยู่จัดส่งเพื่อให้ระบบจัดส่งพัสดุให้คุณ:\n` +
-                      `${checkoutUrl}?order=${payment.order_id}`
-                  }
-                ]
-            await pushMessage(customer.line_user_id, confirmedMsgs)
-          } catch (e) {
-            console.error('LINE notify error:', e)
+              : [{
+                  type: 'text',
+                  text: `✅ ยืนยันการชำระเงินแล้ว!\n\nกรุณากรอกที่อยู่จัดส่ง:\n${checkoutUrl}?order=${orderId}`
+                }]
+            await pushMessage(customer.line_user_id, msgs)
           }
         }
       }
     } catch (e) {
-      console.error('Settings/auto-ship error:', e)
+      console.error('Post-confirm error (non-fatal):', e)
     }
 
     return new Response(
-      JSON.stringify({ success: true }),
+      JSON.stringify({ success: true, payment }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     )
-  } catch (err: any) {
-    console.error('Confirm error:', err)
+  } catch (err) {
+    console.error('Confirm fatal error:', err)
     return new Response(
-      JSON.stringify({ error: err?.message || 'Internal error' }),
+      JSON.stringify({ error: String(err) }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }
     )
   }

@@ -72,14 +72,25 @@ export default function OrderDetailPage({ order: initialOrder }: { order: any })
 
   const handleConfirmPayment = async (paymentId: string) => {
     if (!confirm('ยืนยันสลิป และปรับสถานะออเดอร์เป็นชำระแล้ว?')) return
+    console.log('Confirming payment:', paymentId)
     try {
       setLoading(true)
       const res = await fetch(`/api/payments/${paymentId}/confirm`, { method: 'PUT' })
-      if (res.ok) await reloadOrder()
+      const data = await res.json()
+      console.log('Confirm response:', res.status, data)
+      if (data.success) {
+        await reloadOrder()
+      } else {
+        alert('ยืนยันไม่สำเร็จ: ' + (data.error || res.status))
+      }
+    } catch (err) {
+      console.error('Confirm error:', err)
+      alert('เกิดข้อผิดพลาด: ' + err)
     } finally {
       setLoading(false)
     }
   }
+
 
   const handleRejectPayment = async (paymentId: string) => {
     if (!confirm('ปฏิเสธสลิปนี้?')) return
