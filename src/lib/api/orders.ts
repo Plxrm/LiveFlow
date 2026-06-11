@@ -17,7 +17,12 @@ export async function getOrders(filters?: {
         status,
         created_at,
         live_sessions ( title ),
-        customers ( display_name, line_user_id )
+        customers (
+          id, display_name, phone, line_user_id,
+          address_detail, subdistrict, district,
+          province, zipcode
+        ),
+        order_items(product_name, price, quantity)
       `)
       .order('created_at', { ascending: false })
 
@@ -37,6 +42,8 @@ export async function getOrders(filters?: {
       order_number: order.order_number,
       customer_name: (order.customers as any)?.display_name || 'ลูกค้า',
       customer_line_id: (order.customers as any)?.line_user_id || '',
+      customer: order.customers,
+      items: order.order_items,
       total: order.total,
       status: order.status,
       live_session_title: (order.live_sessions as any)?.title || null,

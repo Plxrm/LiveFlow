@@ -71,6 +71,25 @@ export async function createOrderShipment(orderId: string) {
   // ดึงข้อมูลร้านค้า (ผู้ส่ง)
   const shopInfo = await getShopShippingInfo()
 
+  // เช็ค KEX env
+  const appKey = import.meta.env.KEX_APP_KEY
+  if (!appKey) {
+    return { error: 'KEX API ยังไม่ได้ตั้งค่า' }
+  }
+
+  // เช็คเบอร์โทรลูกค้า format 10 หลัก
+  let phone = customer.phone || ''
+  phone = phone.replace(/[^0-9]/g, '')
+  if (phone.length !== 10 && phone.length !== 9) {
+    return { error: `เบอร์โทรลูกค้าไม่ถูกต้อง: ${phone}` }
+  }
+
+  // เช็ค zipcode 5 หลัก
+  const zipcode = customer.zipcode || ''
+  if (zipcode.length !== 5) {
+    return { error: `รหัสไปรษณีย์ไม่ถูกต้อง: ${zipcode}` }
+  }
+
   // สร้าง package info จาก order_items
   const items = order.order_items as any[]
   const packages = items.map((item) => ({

@@ -10,6 +10,8 @@ interface Order {
   order_number: string
   customer_name: string
   customer_line_id: string
+  customer?: any
+  items?: any[]
   total: number
   status: string
   live_session_title: string | null
@@ -126,8 +128,8 @@ export default function PrintLabelsPage({ ordersData }: PrintLabelsPageProps) {
         </span>
       )
       case 'error': return (
-        <span className="inline-flex items-center gap-1 text-red-500 text-xs" title={s.errorMsg}>
-          <XCircle size={12} /> ผิดพลาด
+        <span className="inline-flex items-start gap-1 text-red-500 text-[11px] font-medium leading-tight max-w-[150px]">
+          <XCircle size={12} className="shrink-0 mt-0.5" /> {s.errorMsg || 'ผิดพลาด'}
         </span>
       )
       default: return (
@@ -274,8 +276,16 @@ export default function PrintLabelsPage({ ordersData }: PrintLabelsPageProps) {
                     >
                       <td className="px-4 py-3" onClick={e => e.stopPropagation()}>
                         <button
-                          onClick={() => !isProcessing && toggleSelect(order.id)}
-                          className="text-gray-400 hover:text-blue-600 transition-colors"
+                          onClick={() => {
+                            if (!order.customer?.address_detail || !order.customer?.zipcode) return
+                            if (!isProcessing) toggleSelect(order.id)
+                          }}
+                          className={`transition-colors ${
+                            (!order.customer?.address_detail || !order.customer?.zipcode)
+                              ? 'text-gray-200 cursor-not-allowed'
+                              : 'text-gray-400 hover:text-blue-600'
+                          }`}
+                          disabled={!order.customer?.address_detail || !order.customer?.zipcode}
                         >
                           {s?.selected
                             ? <SquareCheck size={18} className="text-blue-600" />
@@ -295,9 +305,29 @@ export default function PrintLabelsPage({ ordersData }: PrintLabelsPageProps) {
                       </td>
                       <td className="px-4 py-3 font-medium text-gray-800">{order.customer_name}</td>
                       <td className="px-4 py-3 text-gray-500 text-xs max-w-[200px]">
-                        <span className="text-gray-400 italic">—</span>
+                        {(!order.customer?.address_detail || !order.customer?.zipcode) ? (
+                          <span className="text-red-500 font-semibold flex items-center gap-1">
+                            <XCircle size={12} /> ยังไม่ได้กรอกที่อยู่
+                          </span>
+                        ) : (
+                          <span>
+                            {order.customer.address_detail} {order.customer.subdistrict} {order.customer.district} {order.customer.province} {order.customer.zipcode}
+                          </span>
+                        )}
                       </td>
-                      <td className="px-4 py-3 text-center text-gray-500 text-xs">—</td>
+                      <td className="px-4 py-3 text-gray-500 text-xs">
+                        {order.items && order.items.length > 0 ? (
+                          <div className="flex flex-col gap-0.5">
+                            {order.items.map((item: any, i: number) => (
+                              <span key={i} className="truncate max-w-[150px]" title={item.product_name}>
+                                {item.quantity}x {item.product_name}
+                              </span>
+                            ))}
+                          </div>
+                        ) : (
+                          <span className="text-gray-400 italic">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3 font-semibold text-gray-800">{formatPrice(order.total)}</td>
                       <td className="px-4 py-3">{getLabelBadge(s)}</td>
                     </tr>
