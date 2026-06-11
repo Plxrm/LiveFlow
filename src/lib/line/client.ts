@@ -11,34 +11,90 @@ export async function replyMessage(
   replyToken: string,
   messages: Array<any>
 ) {
-  const token = await getLineToken()
-  if (!token) return null
-  const res = await fetch(`${LINE_API}/message/reply`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({ replyToken, messages })
-  })
-  return res.json()
+  try {
+    const token = await getLineToken()
+
+    console.log('LINE replyMessage:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      replyToken: replyToken ? replyToken.substring(0, 10) + '...' : '(empty)',
+      messageCount: messages.length
+    })
+
+    if (!token) {
+      console.error('LINE: No access token configured')
+      return null
+    }
+
+    const res = await fetch(`${LINE_API}/message/reply`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ replyToken, messages })
+    })
+
+    const data = await res.json()
+    console.log('LINE reply response:', {
+      status: res.status,
+      data: data
+    })
+
+    if (!res.ok) {
+      console.error('LINE reply failed:', data)
+    }
+
+    return data
+  } catch (err) {
+    console.error('LINE replyMessage error:', err)
+    return null
+  }
 }
 
 export async function pushMessage(
   to: string,
   messages: Array<any>
 ) {
-  const token = await getLineToken()
-  if (!token) return null
-  const res = await fetch(`${LINE_API}/message/push`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`
-    },
-    body: JSON.stringify({ to, messages })
-  })
-  return res.json()
+  try {
+    const token = await getLineToken()
+
+    console.log('LINE pushMessage:', {
+      hasToken: !!token,
+      tokenLength: token?.length || 0,
+      to: to ? to.substring(0, 10) + '...' : '(empty)',
+      messageCount: messages.length
+    })
+
+    if (!token) {
+      console.error('LINE: No access token configured')
+      return null
+    }
+
+    const res = await fetch(`${LINE_API}/message/push`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`
+      },
+      body: JSON.stringify({ to, messages })
+    })
+
+    const data = await res.json()
+    console.log('LINE push response:', {
+      status: res.status,
+      data: data
+    })
+
+    if (!res.ok) {
+      console.error('LINE push failed:', data)
+    }
+
+    return data
+  } catch (err) {
+    console.error('LINE pushMessage error:', err)
+    return null
+  }
 }
 
 export async function getProfile(userId: string) {

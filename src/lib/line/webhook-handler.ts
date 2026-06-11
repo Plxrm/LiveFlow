@@ -20,6 +20,13 @@ export async function handleLineWebhook(body: any) {
     const userId = event.source.userId
     const replyToken = event.replyToken
 
+    console.log('Webhook event:', {
+      type: event.type,
+      hasReplyToken: !!replyToken,
+      messageType: event.message?.type,
+      text: event.message?.text
+    })
+
     // -- Handle Image Upload (Slip) --
     if (event.message.type === 'image') {
       const customer = await findOrCreateCustomer(userId)
@@ -296,7 +303,16 @@ export async function handleLineWebhook(body: any) {
         }
       }
 
-      await replyMessage(replyToken, replyMessages)
+      console.log('Sending CF reply:', {
+        cfCode,
+        orderId: order?.id,
+        customerLineId: userId,
+        messageCount: replyMessages.length
+      })
+
+      const replyResult = await replyMessage(replyToken, replyMessages)
+      console.log('CF reply result:', replyResult)
+
       await logCF(userId, text, cfCode, sessionId, true, null)
     }
   }
