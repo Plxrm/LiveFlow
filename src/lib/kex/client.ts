@@ -88,36 +88,67 @@ export async function createShipment(
   params: CreateShipmentParams,
   config: KexConfig
 ): Promise<ShipmentResult> {
+  const url = `${getBaseUrl(config.env)}/v3/shipment_info`
+
+  console.log('=== KEX DEBUG ===')
+  console.log('URL:', url)
+  console.log('Headers:', JSON.stringify({
+    app_key: config.appKey ? 'SET(' + config.appKey.length + ')' : 'EMPTY',
+    app_id: config.appId || 'EMPTY',
+    merchant_id: config.merchantId || 'EMPTY'
+  }))
+  console.log('Body:', JSON.stringify({ req: { shipment: params } }))
+
   try {
-    if (!config.appKey) {
-      console.error('KEX: No app_key configured')
-      return { error: true, status_code: 'NO_KEY', status_desc: 'app_key ไม่ถูกตั้งค่า' }
-    }
-    const res = await fetch(
-      `${getBaseUrl(config.env)}/v3/shipment_info`,
-      {
-        method: 'POST',
-        headers: getHeaders(config),
-        body: JSON.stringify({
-          req: { shipment: params }
-        })
+    const res = await fetch(url, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'app_key': config.appKey,
+        'app_id': config.appId,
+        'merchant_id': config.merchantId
+      },
+      body: JSON.stringify({ req: { shipment: params } })
+    })
+
+    console.log('KEX status:', res.status)
+    console.log('KEX headers:', JSON.stringify(
+      Object.fromEntries(res.headers.entries())
+    ))
+
+    const text = await res.text()
+    console.log('KEX raw response:', text)
+
+    let data: any
+    try {
+      data = JSON.parse(text)
+    } catch {
+      console.error('KEX response not JSON:', text)
+      return {
+        error: true,
+        status_code: 'PARSE_ERROR',
+        status_desc: 'Response ไม่ใช่ JSON: ' + text.substring(0, 200)
       }
-    )
-    const data = await res.json()
-    console.log('KEX full response:', JSON.stringify(data))
+    }
+
     const shipment = data?.res?.shipment
     if (shipment?.status_code === '000') {
       return shipment
     }
+
     console.error('KEX error code:', shipment?.status_code, 'desc:', shipment?.status_desc)
     return {
       error: true,
-      status_code: shipment?.status_code,
-      status_desc: shipment?.status_desc
+      status_code: shipment?.status_code || String(res.status),
+      status_desc: shipment?.status_desc || 'Unknown'
     }
   } catch (err) {
-    console.error('KEX create failed:', err)
-    return { error: true, status_code: 'EXCEPTION', status_desc: String(err) }
+    console.error('KEX fetch error:', err)
+    return {
+      error: true,
+      status_code: 'FETCH_ERROR',
+      status_desc: 'ไม่สามารถเชื่อมต่อ KEX: ' + String(err)
+    }
   }
 }
 

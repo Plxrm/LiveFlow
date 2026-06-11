@@ -137,8 +137,10 @@ export async function createOrderShipment(orderId: string, kexConfig: KexConfig)
 
   if (!result || (result as any).error) {
     const r = result as any
-    const kexError = r?.status_desc || 'ไม่ทราบสาเหตุ'
-    return { error: `KEX: ${kexError} (code: ${r?.status_code || 'N/A'})` }
+    const errMsg = r?.status_desc || 'ไม่ทราบสาเหตุ'
+    const errCode = r?.status_code || 'N/A'
+    console.error('Ship failed:', errCode, errMsg)
+    return { error: `KEX: ${errMsg} (code: ${errCode})` }
   }
 
   // บันทึกลง shipments table
