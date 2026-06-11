@@ -12,7 +12,7 @@ const liveSession = await getActiveLiveSession()
 
 <AdminLayout title={`Dashboard | ${APP_NAME}`}>
   <DashboardPage
-    client:load
+    client:only="react"
     statsData={JSON.stringify(stats)}
     recentOrdersData={JSON.stringify(recentOrders)}
     pendingPaymentsData={JSON.stringify(pendingPayments)}

@@ -10,7 +10,7 @@ const stats = await getOrderStats()
 
 <AdminLayout title={`Orders | ${APP_NAME}`}>
   <OrdersPage
-    client:load
+    client:only="react"
     initialOrdersData={JSON.stringify(orders)}
     statsData={JSON.stringify(stats)}
   />

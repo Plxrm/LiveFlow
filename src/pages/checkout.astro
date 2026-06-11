@@ -5,5 +5,5 @@ import CheckoutPage from '../components/checkout/CheckoutPage'
 ---
 
 <CustomerLayout title={`Checkout | ${APP_NAME}`}>
-  <CheckoutPage client:load />
+  <CheckoutPage client:only="react" />
 </CustomerLayout>

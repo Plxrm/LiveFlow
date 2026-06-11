@@ -8,5 +8,5 @@ const sessions = await getLiveSessions()
 ---
 
 <AdminLayout title={`Live Sessions | ${APP_NAME}`}>
-  <LivePage client:load initialSessionsData={JSON.stringify(sessions)} />
+  <LivePage client:only="react" initialSessionsData={JSON.stringify(sessions)} />
 </AdminLayout>

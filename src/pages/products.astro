@@ -10,7 +10,7 @@ const stats = await getProductStats()
 
 <AdminLayout title={`Inventory | ${APP_NAME}`}>
   <ProductsPage
-    client:load
+    client:only="react"
     initialProductsData={JSON.stringify(products)}
     statsData={JSON.stringify(stats)}
   />

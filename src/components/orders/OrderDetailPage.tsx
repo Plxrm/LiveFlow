@@ -10,6 +10,9 @@ import { formatPrice, formatDate, formatTime, formatStatus } from '../../utils/f
 export default function OrderDetailPage({ orderData }: { orderData: string }) {
   const [order, setOrder] = useState(() => JSON.parse(orderData))
 
+  console.log('Order payments:', order.payments)
+  console.log('Order status:', order.status)
+
   const [loading, setLoading] = useState(false)
   const [shipLoading, setShipLoading] = useState(false)
   const [labelPreview, setLabelPreview] = useState<Record<string, boolean>>({})
@@ -73,20 +76,22 @@ export default function OrderDetailPage({ orderData }: { orderData: string }) {
 
   const handleConfirmPayment = async (paymentId: string) => {
     if (!confirm('ยืนยันสลิป และปรับสถานะออเดอร์เป็นชำระแล้ว?')) return
-    console.log('Confirming payment:', paymentId)
+    console.log('Confirming:', paymentId)
     try {
       setLoading(true)
       const res = await fetch(`/api/payments/${paymentId}/confirm`, { method: 'PUT' })
+      console.log('Response:', res.status)
       const data = await res.json()
-      console.log('Confirm response:', res.status, data)
+      console.log('Data:', data)
       if (data.success) {
-        await reloadOrder()
+        alert('ยืนยันสำเร็จ')
+        window.location.reload()
       } else {
-        alert('ยืนยันไม่สำเร็จ: ' + (data.error || res.status))
+        alert('ยืนยันไม่สำเร็จ: ' + (data.error || 'Unknown error'))
       }
     } catch (err) {
-      console.error('Confirm error:', err)
-      alert('เกิดข้อผิดพลาด: ' + err)
+      console.error('Error:', err)
+      alert('เกิดข้อผิดพลาด')
     } finally {
       setLoading(false)
     }

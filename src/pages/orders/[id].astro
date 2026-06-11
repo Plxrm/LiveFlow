@@ -10,5 +10,5 @@ if (!order) return Astro.redirect('/orders')
 ---
 
 <AdminLayout title={`ออเดอร์ ${order.order_number} | ${APP_NAME}`}>
-  <OrderDetailPage client:load orderData={JSON.stringify(order)} />
+  <OrderDetailPage client:only="react" orderData={JSON.stringify(order)} />
 </AdminLayout>
