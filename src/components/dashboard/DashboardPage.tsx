@@ -33,6 +33,42 @@ export default function DashboardPage({ statsData, recentOrdersData, pendingPaym
   const recentOrders = JSON.parse(recentOrdersData)
   const pendingPayments = JSON.parse(pendingPaymentsData)
   const liveSession = JSON.parse(liveSessionData)
+
+  console.log('Pending payments:', pendingPayments)
+
+  const handleConfirmPayment = async (paymentId: string) => {
+    console.log('Confirm payment:', paymentId)
+    try {
+      const res = await fetch(`/api/payments/${paymentId}/confirm`, { method: 'PUT' })
+      const data = await res.json()
+      console.log('Result:', data)
+
+      if (data.success) {
+        alert('✅ ยืนยันสำเร็จ')
+        window.location.reload()
+      } else {
+        alert('❌ ' + (data.error || 'ยืนยันไม่สำเร็จ'))
+      }
+    } catch (err) {
+      console.error('Error:', err)
+      alert('เกิดข้อผิดพลาด')
+    }
+  }
+
+  const handleRejectPayment = async (paymentId: string) => {
+    if (!confirm('ต้องการปฏิเสธสลิปนี้?')) return
+    try {
+      const res = await fetch(`/api/payments/${paymentId}/reject`, { method: 'PUT' })
+      const data = await res.json()
+      if (data.success) {
+        alert('ปฏิเสธแล้ว')
+        window.location.reload()
+      }
+    } catch (err) {
+      alert('เกิดข้อผิดพลาด')
+    }
+  }
+
   const STAT_CARDS = [
     {
       label: 'ออเดอร์ทั้งหมด',
@@ -200,10 +236,16 @@ export default function DashboardPage({ statsData, recentOrdersData, pendingPaym
 
               {/* Actions */}
               <div className="flex flex-col gap-2 mt-1">
-                <button className="w-full bg-blue-600 text-white py-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.98]">
+                <button
+                  onClick={() => handleConfirmPayment(payment.id)}
+                  className="w-full bg-blue-600 text-white py-3 rounded-lg text-sm font-semibold hover:bg-blue-700 transition-colors shadow-sm active:scale-[0.98]"
+                >
                   ยืนยันยอดเงิน
                 </button>
-                <button className="w-full bg-transparent text-gray-500 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors">
+                <button
+                  onClick={() => handleRejectPayment(payment.id)}
+                  className="w-full bg-transparent text-gray-500 py-2 rounded-lg text-sm hover:bg-gray-100 transition-colors"
+                >
                   แจ้งปัญหา
                 </button>
               </div>
