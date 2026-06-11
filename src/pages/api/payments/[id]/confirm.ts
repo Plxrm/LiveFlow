@@ -83,7 +83,7 @@ export const PUT: APIRoute = async ({ params, request }) => {
         if (!hasAddress) {
           // ไม่มีที่อยู่ → ส่งลิงก์กรอก
           const settings = await getSettings()
-          const baseUrl = 'https://liveflow.shop'
+          const baseUrl = 'https://liveflow-1on.pages.dev'
 
           messages.push({
             type: 'text',

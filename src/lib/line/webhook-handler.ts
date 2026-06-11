@@ -220,7 +220,7 @@ export async function handleLineWebhook(body: any) {
       const { data: key } = await supabaseAdmin
         .from('product_keys')
         .select(`
-          id, key_code, price, product_id,
+          id, key_code, price, product_id, is_released,
           products(
             id, name, free_shipping, price
           )
@@ -235,6 +235,12 @@ export async function handleLineWebhook(body: any) {
         const notFoundMsg = `❌ ${cfCode} ไม่พบรหัสนี้ หรือถูกจองแล้ว ลองรหัสอื่นดูนะคะ`
         await replyMessage(replyToken, [{ type: 'text', text: notFoundMsg }])
         await logCF(userId, text, cfCode, sessionId, false, 'key_not_found_or_sold')
+        continue
+      }
+
+      if (!key.is_released) {
+        await replyMessage(replyToken, [{ type: 'text', text: '⏳ สินค้านี้ยังไม่เปิดขาย รอแอดมินปล่อยก่อนนะคะ' }])
+        await logCF(userId, text, cfCode, sessionId, false, 'not_released_yet')
         continue
       }
 

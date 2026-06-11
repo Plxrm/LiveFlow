@@ -9,6 +9,8 @@ const PUBLIC_PATHS = [
   '/api/auth/login',
   '/api/auth/logout',
   '/print/',
+  '/api/orders',
+  '/api/customers',
 ]
 
 export const onRequest = defineMiddleware(async ({ request, redirect, cookies }, next) => {

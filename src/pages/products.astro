@@ -1,17 +1,10 @@
 ---
 import AdminLayout from '../layouts/AdminLayout.astro'
-import { APP_NAME } from '../lib/constants'
 import ProductsPage from '../components/products/ProductsPage'
-import { getProducts, getProductStats } from '../lib/api/products'
+import { getAllKeys } from '../lib/api/products'
 
-const products = await getProducts()
-const stats = await getProductStats()
+const keys = await getAllKeys()
 ---
-
-<AdminLayout title={`Inventory | ${APP_NAME}`}>
-  <ProductsPage
-    client:only="react"
-    initialProductsData={JSON.stringify(products)}
-    statsData={JSON.stringify(stats)}
-  />
+<AdminLayout title="คลังสินค้า">
+  <ProductsPage client:only="react" initialKeysData={JSON.stringify(keys)} />
 </AdminLayout>

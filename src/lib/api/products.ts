@@ -186,6 +186,36 @@ export async function createProduct(data: {
   }
 }
 
+export async function getAllKeys(filters?: {
+  status?: string
+  search?: string
+}) {
+  if (!supabaseAdmin) return []
+
+  let query = supabaseAdmin
+    .from('product_keys')
+    .select(`
+      *,
+      products(name, description, free_shipping, shipping_fee)
+    `)
+    .order('created_at', { ascending: false })
+
+  if (filters?.status && filters.status !== 'all') {
+    query = query.eq('status', filters.status)
+  }
+  if (filters?.search) {
+    query = query.or(`key_code.ilike.%${filters.search}%`)
+    // We can't trivially search the joined products.name with standard postgrest .or
+    // but we'll try to stick to what the user provided: `key_code.ilike.%...%`
+  }
+
+  const { data, error } = await query
+  if (error) {
+    console.error('getAllKeys error:', error)
+  }
+  return data || []
+}
+
 export async function updateProduct(id: string, data: Partial<any>) {
   try {
     if (!supabaseAdmin) throw new Error('Supabase not configured')

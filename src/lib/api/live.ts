@@ -30,7 +30,7 @@ export async function getLiveSessionById(id: string) {
       .select(`
         *,
         live_products (
-          id, cf_code,
+          id, cf_code, release_mode,
           products ( id, name, price, stock, image_url, free_shipping )
         )
       `)
@@ -48,7 +48,7 @@ export async function getLiveSessionById(id: string) {
       if (productIds.length > 0) {
         const { data: keys } = await supabaseAdmin
           .from('product_keys')
-          .select('id, key_code, price, status, product_id')
+          .select('id, key_code, price, status, product_id, is_released')
           .in('product_id', productIds)
           .eq('status', 'available')
           .order('key_code', { ascending: true })

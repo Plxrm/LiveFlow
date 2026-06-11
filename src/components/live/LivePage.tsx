@@ -52,6 +52,7 @@ export default function LivePage({ initialSessionsData }: LivePageProps) {
   const [showAddProductModal, setShowAddProductModal] = useState(false)
   const [availableProducts, setAvailableProducts] = useState<any[]>([])
   const [selectedProductId, setSelectedProductId] = useState('')
+  const [releaseMode, setReleaseMode] = useState<'all' | 'manual'>('all')
 
   const fetchSessions = async () => {
     setLoading(true)
@@ -140,7 +141,7 @@ export default function LivePage({ initialSessionsData }: LivePageProps) {
       const res = await fetch(`/api/live/${activeSessionId}/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ product_id: selectedProductId })
+        body: JSON.stringify({ product_id: selectedProductId, release_mode: releaseMode })
       })
       if (res.ok) {
         setShowAddProductModal(false)
@@ -166,6 +167,35 @@ export default function LivePage({ initialSessionsData }: LivePageProps) {
         fetchSessionDetails(activeSessionId)
         fetchSessions()
       }
+    } catch (e) {
+      alert('Network error')
+    }
+  }
+
+  const handleReleaseKey = async (keyId: string) => {
+    if (!activeSessionId) return
+    try {
+      const res = await fetch(`/api/live/${activeSessionId}/release`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key_id: keyId })
+      })
+      if (res.ok) fetchSessionDetails(activeSessionId)
+    } catch (e) {
+      alert('Network error')
+    }
+  }
+
+  const handleReleaseAll = async (productId: string) => {
+    if (!activeSessionId) return
+    if (!confirm('ยืนยันการปล่อยทุกรหัสของสินค้านี้?')) return
+    try {
+      const res = await fetch(`/api/live/${activeSessionId}/release-all`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ product_id: productId })
+      })
+      if (res.ok) fetchSessionDetails(activeSessionId)
     } catch (e) {
       alert('Network error')
     }
@@ -274,17 +304,50 @@ export default function LivePage({ initialSessionsData }: LivePageProps) {
                             }
                           </span>
                         )}
-                      </div>
-                      <div className="flex flex-wrap gap-1.5">
-                        {previewKeys.map(k => (
-                          <span key={k.id} className="bg-white border border-blue-200 text-blue-700 font-mono text-[11px] font-bold px-2 py-0.5 rounded">
-                            {k.key_code}
-                          </span>
-                        ))}
-                        {hasMore && (
-                          <span className="text-[11px] text-blue-400 px-1 py-0.5">+{keys.length - 8} เพิ่มเติม</span>
+                        {lp.release_mode === 'manual' && session.status !== 'ended' && (
+                          <button onClick={() => handleReleaseAll(lp.products.id)} className="bg-white border border-blue-200 text-blue-600 hover:bg-blue-50 px-2 py-1 rounded text-[10px] font-bold transition-colors">
+                            ปล่อยทั้งหมด
+                          </button>
                         )}
                       </div>
+                      
+                      {lp.release_mode === 'manual' ? (
+                        <div className="flex flex-col gap-1.5 mt-2">
+                          {keys.map((k: any) => (
+                            <div key={k.id} className="flex justify-between items-center bg-white border border-blue-100 rounded-lg px-3 py-2 text-sm">
+                              <div>
+                                <span className="font-mono font-bold text-blue-700 mr-2">{k.key_code}</span>
+                                <span className="text-green-600 font-medium text-xs">฿{k.price}</span>
+                              </div>
+                              <div>
+                                {k.is_released ? (
+                                  <span className="text-[11px] font-semibold text-emerald-600 bg-emerald-50 px-2 py-1 rounded-full">🟢 ปล่อยแล้ว</span>
+                                ) : (
+                                  <div className="flex items-center gap-2">
+                                    <span className="text-[11px] font-semibold text-gray-500 bg-gray-100 px-2 py-1 rounded-full">🔒 ยังไม่ปล่อย</span>
+                                    {session.status !== 'ended' && (
+                                      <button onClick={() => handleReleaseKey(k.id)} className="text-[11px] font-bold text-white bg-blue-600 hover:bg-blue-700 px-2.5 py-1 rounded-lg transition-colors">
+                                        🔓 ปล่อย
+                                      </button>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      ) : (
+                        <div className="flex flex-wrap gap-1.5">
+                          {previewKeys.map((k: any) => (
+                            <span key={k.id} className="bg-white border border-emerald-200 text-emerald-700 font-mono text-[11px] font-bold px-2 py-0.5 rounded">
+                              {k.key_code}
+                            </span>
+                          ))}
+                          {hasMore && (
+                            <span className="text-[11px] text-blue-400 px-1 py-0.5">+{keys.length - 8} เพิ่มเติม</span>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
@@ -359,6 +422,20 @@ export default function LivePage({ initialSessionsData }: LivePageProps) {
                     )}
                   </div>
                 )}
+
+                <div className="flex flex-col gap-2 mt-2">
+                  <label className="text-xs font-semibold uppercase text-gray-500 block">โหมดการปล่อยสินค้า <span className="text-red-500">*</span></label>
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="release_mode" value="all" checked={releaseMode === 'all'} onChange={() => setReleaseMode('all')} className="text-blue-600 focus:ring-blue-500" />
+                      <span className="text-sm">ปล่อยทั้งหมดทันที</span>
+                    </label>
+                    <label className="flex items-center gap-2 cursor-pointer">
+                      <input type="radio" name="release_mode" value="manual" checked={releaseMode === 'manual'} onChange={() => setReleaseMode('manual')} className="text-blue-600 focus:ring-blue-500" />
+                      <span className="text-sm">ปล่อยทีละชิ้น (Manual)</span>
+                    </label>
+                  </div>
+                </div>
               </div>
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
                 <button type="button" onClick={() => setShowAddProductModal(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100">ยกเลิก</button>
