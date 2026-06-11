@@ -85,6 +85,7 @@ export async function getPendingPayments() {
     const { data, error } = await supabaseAdmin
       .from('payments')
       .select(`
+        id,
         amount,
         slip_url,
         created_at,
@@ -101,6 +102,7 @@ export async function getPendingPayments() {
     return (data || []).map(payment => {
       const order = payment.orders as any
       return {
+        id: payment.id,
         order_number: order?.order_number || 'N/A',
         customer_name: order?.customers?.display_name || 'ลูกค้า',
         amount: payment.amount,

@@ -34,9 +34,14 @@ export default function DashboardPage({ statsData, recentOrdersData, pendingPaym
   const pendingPayments = JSON.parse(pendingPaymentsData)
   const liveSession = JSON.parse(liveSessionData)
 
-  console.log('Pending payments:', pendingPayments)
+  console.log('Pending payments data:', JSON.stringify(pendingPayments, null, 2))
 
   const handleConfirmPayment = async (paymentId: string) => {
+    if (!paymentId) {
+      console.error('Payment ID is missing!')
+      alert('ไม่พบข้อมูลการชำระเงิน')
+      return
+    }
     console.log('Confirm payment:', paymentId)
     try {
       const res = await fetch(`/api/payments/${paymentId}/confirm`, { method: 'PUT' })
@@ -56,6 +61,11 @@ export default function DashboardPage({ statsData, recentOrdersData, pendingPaym
   }
 
   const handleRejectPayment = async (paymentId: string) => {
+    if (!paymentId) {
+      console.error('Payment ID is missing!')
+      alert('ไม่พบข้อมูลการชำระเงิน')
+      return
+    }
     if (!confirm('ต้องการปฏิเสธสลิปนี้?')) return
     try {
       const res = await fetch(`/api/payments/${paymentId}/reject`, { method: 'PUT' })
