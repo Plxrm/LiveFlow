@@ -2,21 +2,16 @@ const KEX_POC_URL = 'https://poc-rd.th.kex-express.com/easyship-cust-api/api'
 const KEX_PROD_URL = 'https://cms-api.th.kex-express.com/easyship-customer-api/api'
 
 function getBaseUrl() {
-  const env = import.meta.env.KEX_ENV
-    || process.env.KEX_ENV
-    || 'poc'
+  const env = import.meta.env.PUBLIC_KEX_ENV || 'poc'
   return env === 'production' ? KEX_PROD_URL : KEX_POC_URL
 }
 
 function getHeaders() {
   return {
     'Content-Type': 'application/json; charset=UTF8',
-    'app_key': import.meta.env.KEX_APP_KEY
-      || process.env.KEX_APP_KEY || '',
-    'app_id': import.meta.env.KEX_APP_ID
-      || process.env.KEX_APP_ID || '',
-    'merchant_id': import.meta.env.KEX_MERCHANT_ID
-      || process.env.KEX_MERCHANT_ID || ''
+    'app_key': import.meta.env.PUBLIC_KEX_APP_KEY || '',
+    'app_id': import.meta.env.PUBLIC_KEX_APP_ID || '',
+    'merchant_id': import.meta.env.PUBLIC_KEX_MERCHANT_ID || ''
   }
 }
 
