@@ -179,7 +179,7 @@ export interface Database {
           live_session_id: string
           product_id: string
           cf_code: string
-          live_price: number
+          live_price?: number
           max_per_person?: number | null
           created_at?: string
         }

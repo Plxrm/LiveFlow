@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Plus, Radio, Play, Square, Package, ArrowLeft, Trash2, X, Search } from 'lucide-react'
+import { Plus, Radio, Play, Square, Package, ArrowLeft, Trash2, X, Key } from 'lucide-react'
 import { formatDate, formatTime, formatPrice } from '../../utils/format'
 
 interface LiveSession {
@@ -13,18 +13,25 @@ interface LiveSession {
   created_at: string
 }
 
+interface AvailableKey {
+  id: string
+  key_code: string
+  price: number
+  product_id: string
+}
+
 interface LiveProduct {
   id: string
   cf_code: string
-  live_price: number
-  max_per_person: number | null
   products: {
     id: string
     name: string
     price: number
     stock: number
     image_url: string | null
+    free_shipping: boolean
   }
+  available_keys: AvailableKey[]
 }
 
 interface LivePageProps {
@@ -44,12 +51,7 @@ export default function LivePage({ initialSessions }: LivePageProps) {
 
   const [showAddProductModal, setShowAddProductModal] = useState(false)
   const [availableProducts, setAvailableProducts] = useState<any[]>([])
-  const [addProductForm, setAddProductForm] = useState({
-    product_id: '',
-    cf_code: '',
-    live_price: '',
-    max_per_person: ''
-  })
+  const [selectedProductId, setSelectedProductId] = useState('')
 
   const fetchSessions = async () => {
     setLoading(true)
@@ -123,7 +125,7 @@ export default function LivePage({ initialSessions }: LivePageProps) {
       const res = await fetch(`/api/live/${activeSessionId}/products`)
       if (res.ok) {
         setAvailableProducts(await res.json())
-        setAddProductForm({ product_id: '', cf_code: '', live_price: '', max_per_person: '' })
+        setSelectedProductId('')
         setShowAddProductModal(true)
       }
     } catch (e) {
@@ -133,18 +135,12 @@ export default function LivePage({ initialSessions }: LivePageProps) {
 
   const handleAddProduct = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!activeSessionId) return
+    if (!activeSessionId || !selectedProductId) return
     try {
-      const payload = {
-        product_id: addProductForm.product_id,
-        cf_code: addProductForm.cf_code,
-        live_price: addProductForm.live_price ? Number(addProductForm.live_price) : undefined,
-        max_per_person: addProductForm.max_per_person ? Number(addProductForm.max_per_person) : undefined
-      }
       const res = await fetch(`/api/live/${activeSessionId}/products`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        body: JSON.stringify({ product_id: selectedProductId })
       })
       if (res.ok) {
         setShowAddProductModal(false)
@@ -174,6 +170,9 @@ export default function LivePage({ initialSessions }: LivePageProps) {
       alert('Network error')
     }
   }
+
+  // Helper: get selected product info
+  const selectedProduct = availableProducts.find(p => p.id === selectedProductId)
 
   // View: Session Details
   if (activeSessionId && sessionDetails) {
@@ -221,46 +220,86 @@ export default function LivePage({ initialSessions }: LivePageProps) {
               </button>
             )}
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-left text-sm">
-              <thead>
-                <tr className="border-b border-gray-100">
-                  <th className="px-5 py-3 font-semibold text-gray-400">รหัส CF</th>
-                  <th className="px-5 py-3 font-semibold text-gray-400">สินค้า</th>
-                  <th className="px-5 py-3 font-semibold text-gray-400 text-right">ราคาไลฟ์</th>
-                  <th className="px-5 py-3 font-semibold text-gray-400 text-right">จำกัด/คน</th>
-                  <th className="px-5 py-3 font-semibold text-gray-400 text-center">สต็อกเหลือ</th>
-                  {session.status !== 'ended' && <th className="px-5 py-3 font-semibold text-gray-400 text-right">จัดการ</th>}
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-gray-50">
-                {products.length > 0 ? products.map(lp => (
-                  <tr key={lp.id} className="hover:bg-gray-50">
-                    <td className="px-5 py-3 font-mono font-bold text-blue-600">{lp.cf_code}</td>
-                    <td className="px-5 py-3 font-medium text-gray-800 flex items-center gap-3">
+
+          {/* Product Cards */}
+          <div className="p-4 flex flex-col gap-3">
+            {products.length > 0 ? products.map(lp => {
+              const keys = lp.available_keys || []
+              const keyCount = keys.length
+              const prices = keys.map(k => k.price)
+              const minPrice = prices.length > 0 ? Math.min(...prices) : null
+              const maxPrice = prices.length > 0 ? Math.max(...prices) : null
+              const previewKeys = keys.slice(0, 8)
+              const hasMore = keys.length > 8
+
+              return (
+                <div key={lp.id} className="border border-gray-100 rounded-xl p-4 flex flex-col gap-3 hover:border-blue-100 transition-colors bg-white">
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex items-center gap-3">
                       {lp.products.image_url ? (
-                        <img src={lp.products.image_url} alt="" className="w-8 h-8 rounded object-cover" />
-                      ) : <div className="w-8 h-8 rounded bg-gray-100 flex items-center justify-center"><Package size={14} className="text-gray-400"/></div>}
-                      {lp.products.name}
-                    </td>
-                    <td className="px-5 py-3 text-right font-semibold text-green-600">{formatPrice(lp.live_price)}</td>
-                    <td className="px-5 py-3 text-right text-gray-500">{lp.max_per_person || 'ไม่จำกัด'}</td>
-                    <td className="px-5 py-3 text-center">
-                      <span className={`font-semibold ${lp.products.stock === 0 ? 'text-red-500' : 'text-gray-700'}`}>{lp.products.stock}</span>
-                    </td>
+                        <img src={lp.products.image_url} alt="" className="w-10 h-10 rounded-lg object-cover shrink-0" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-lg bg-gray-100 flex items-center justify-center shrink-0">
+                          <Package size={16} className="text-gray-400"/>
+                        </div>
+                      )}
+                      <div>
+                        <p className="font-semibold text-gray-800">{lp.products.name}</p>
+                        {lp.products.free_shipping
+                          ? <span className="text-[11px] text-green-600 font-medium">🚚 ฟรีค่าส่ง</span>
+                          : <span className="text-[11px] text-gray-400">ค่าส่ง: {formatPrice(lp.products.price)}</span>
+                        }
+                      </div>
+                    </div>
                     {session.status !== 'ended' && (
-                      <td className="px-5 py-3 text-right">
-                        <button onClick={() => handleRemoveProduct(lp.id)} className="text-gray-400 hover:text-red-500 p-1 rounded hover:bg-red-50 transition-colors">
-                          <Trash2 size={16} />
-                        </button>
-                      </td>
+                      <button onClick={() => handleRemoveProduct(lp.id)} className="text-gray-300 hover:text-red-500 p-1.5 rounded-lg hover:bg-red-50 transition-colors shrink-0">
+                        <Trash2 size={16} />
+                      </button>
                     )}
-                  </tr>
-                )) : (
-                  <tr><td colSpan={6} className="text-center py-10 text-gray-400">ยังไม่มีสินค้าในไลฟ์นี้</td></tr>
-                )}
-              </tbody>
-            </table>
+                  </div>
+
+                  {/* Keys info */}
+                  {keyCount > 0 ? (
+                    <div className="bg-blue-50 rounded-lg p-3 flex flex-col gap-2">
+                      <div className="flex items-center justify-between">
+                        <span className="text-xs font-semibold text-blue-700 flex items-center gap-1.5">
+                          <Key size={12} />
+                          Keys พร้อมขาย: {keyCount} ชิ้น
+                        </span>
+                        {minPrice !== null && (
+                          <span className="text-xs font-semibold text-green-700">
+                            {minPrice === maxPrice
+                              ? formatPrice(minPrice)
+                              : `${formatPrice(minPrice)} – ${formatPrice(maxPrice!)}`
+                            }
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {previewKeys.map(k => (
+                          <span key={k.id} className="bg-white border border-blue-200 text-blue-700 font-mono text-[11px] font-bold px-2 py-0.5 rounded">
+                            {k.key_code}
+                          </span>
+                        ))}
+                        {hasMore && (
+                          <span className="text-[11px] text-blue-400 px-1 py-0.5">+{keys.length - 8} เพิ่มเติม</span>
+                        )}
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="bg-amber-50 border border-amber-100 rounded-lg px-3 py-2">
+                      <p className="text-xs text-amber-700 font-medium">⚠️ ยังไม่มี keys พร้อมขาย — เพิ่ม keys ในหน้าสินค้า</p>
+                    </div>
+                  )}
+                </div>
+              )
+            }) : (
+              <div className="py-12 text-center flex flex-col items-center gap-2">
+                <Package size={36} className="text-gray-200" />
+                <p className="text-gray-400 font-medium">ยังไม่มีสินค้าในไลฟ์นี้</p>
+                <p className="text-sm text-gray-400">กดปุ่ม "เพิ่มสินค้า" เพื่อเพิ่มสินค้าเข้าไลฟ์</p>
+              </div>
+            )}
           </div>
         </div>
 
@@ -269,7 +308,7 @@ export default function LivePage({ initialSessions }: LivePageProps) {
           <div className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4">
             <form onSubmit={handleAddProduct} className="bg-white rounded-xl shadow-xl border border-gray-100 w-full max-w-lg overflow-hidden flex flex-col">
               <div className="px-6 py-4 border-b border-gray-100 flex justify-between items-center bg-gray-50">
-                <h2 className="font-semibold text-gray-800">เพิ่มสินค้าเข้าระบบไลฟ์</h2>
+                <h2 className="font-semibold text-gray-800 flex items-center gap-2"><Package size={18} className="text-blue-500"/> เพิ่มสินค้าเข้าระบบไลฟ์</h2>
                 <button type="button" onClick={() => setShowAddProductModal(false)} className="text-gray-400 hover:text-red-500"><X size={20} /></button>
               </div>
               <div className="p-6 flex flex-col gap-4">
@@ -277,50 +316,53 @@ export default function LivePage({ initialSessions }: LivePageProps) {
                   <label className="text-xs font-semibold uppercase text-gray-500 mb-1 block">เลือกสินค้า <span className="text-red-500">*</span></label>
                   <select 
                     required 
-                    value={addProductForm.product_id}
-                    onChange={e => setAddProductForm({...addProductForm, product_id: e.target.value})}
+                    value={selectedProductId}
+                    onChange={e => setSelectedProductId(e.target.value)}
                     className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500"
                   >
                     <option value="" disabled>-- เลือกสินค้า --</option>
-                    {availableProducts.map(p => (
-                      <option key={p.id} value={p.id}>{p.name} (สต็อก: {p.stock}) - {formatPrice(p.price)}</option>
-                    ))}
+                    {availableProducts.map(p => {
+                      const keyCount = (p.available_keys || []).length
+                      return (
+                        <option key={p.id} value={p.id}>
+                          {p.name} — {keyCount} keys พร้อมขาย
+                        </option>
+                      )
+                    })}
                   </select>
                 </div>
-                <div>
-                  <label className="text-xs font-semibold uppercase text-gray-500 mb-1 block">รหัส CF <span className="text-red-500">*</span></label>
-                  <input 
-                    type="text" required placeholder="เช่น CF1, A01"
-                    value={addProductForm.cf_code}
-                    onChange={e => setAddProductForm({...addProductForm, cf_code: e.target.value.toUpperCase()})}
-                    className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500 uppercase"
-                  />
-                  <p className="text-[10px] text-gray-400 mt-1">ลูกค้าพิมพ์รหัสนี้เพื่อสั่งจอง</p>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div>
-                    <label className="text-xs font-semibold uppercase text-gray-500 mb-1 block">ราคาไลฟ์ (฿)</label>
-                    <input 
-                      type="number" step="0.01" placeholder="เว้นว่างเพื่อใช้ราคาปกติ"
-                      value={addProductForm.live_price}
-                      onChange={e => setAddProductForm({...addProductForm, live_price: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500"
-                    />
+
+                {/* Preview keys of selected product */}
+                {selectedProduct && (
+                  <div className="bg-blue-50 border border-blue-100 rounded-xl p-4 flex flex-col gap-2">
+                    {(selectedProduct.available_keys || []).length > 0 ? (
+                      <>
+                        <p className="text-xs font-semibold text-blue-700 flex items-center gap-1.5">
+                          <Key size={12} />
+                          สินค้านี้มี {selectedProduct.available_keys.length} keys พร้อมขาย:
+                        </p>
+                        <div className="flex flex-wrap gap-1.5">
+                          {(selectedProduct.available_keys as AvailableKey[]).slice(0, 10).map(k => (
+                            <span key={k.id} className="bg-white border border-blue-200 text-blue-700 font-mono text-[11px] font-bold px-2 py-0.5 rounded">
+                              {k.key_code} <span className="text-green-600">฿{k.price}</span>
+                            </span>
+                          ))}
+                          {selectedProduct.available_keys.length > 10 && (
+                            <span className="text-[11px] text-blue-400 px-1">+{selectedProduct.available_keys.length - 10} เพิ่มเติม</span>
+                          )}
+                        </div>
+                      </>
+                    ) : (
+                      <p className="text-xs text-amber-700 font-medium flex items-center gap-1.5">
+                        ⚠️ สินค้านี้ยังไม่มี keys พร้อมขาย — กรุณาเพิ่ม keys ในหน้าสินค้าก่อน
+                      </p>
+                    )}
                   </div>
-                  <div>
-                    <label className="text-xs font-semibold uppercase text-gray-500 mb-1 block">จำกัด/คน</label>
-                    <input 
-                      type="number" min="1" placeholder="ไม่จำกัด"
-                      value={addProductForm.max_per_person}
-                      onChange={e => setAddProductForm({...addProductForm, max_per_person: e.target.value})}
-                      className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm outline-none focus:border-blue-500"
-                    />
-                  </div>
-                </div>
+                )}
               </div>
               <div className="px-6 py-4 bg-gray-50 border-t border-gray-100 flex justify-end gap-2">
                 <button type="button" onClick={() => setShowAddProductModal(false)} className="px-4 py-2 border border-gray-200 text-gray-600 rounded-lg text-sm font-medium hover:bg-gray-100">ยกเลิก</button>
-                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700">ยืนยัน</button>
+                <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded-lg text-sm font-semibold hover:bg-blue-700 disabled:opacity-50" disabled={!selectedProductId}>เพิ่มเข้าไลฟ์</button>
               </div>
             </form>
           </div>
