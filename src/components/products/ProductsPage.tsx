@@ -374,17 +374,13 @@ function KeyBuilder({
 
 // ═══════════════════════════════════════════════════════════════════════════════
 interface ProductsPageProps {
-  initialProducts: ProductWithKeys[]
-  stats: {
-    totalProducts: number
-    activeProducts: number
-    outOfStock: number
-    totalValue: number
-  }
+  initialProductsData: string
+  statsData: string
 }
 
-export default function ProductsPage({ initialProducts, stats }: ProductsPageProps) {
-  const [products, setProducts] = useState<ProductWithKeys[]>(initialProducts)
+export default function ProductsPage({ initialProductsData, statsData }: ProductsPageProps) {
+  const [products, setProducts] = useState<ProductWithKeys[]>(() => JSON.parse(initialProductsData))
+  const stats = JSON.parse(statsData)
   const [search, setSearch]     = useState('')
   const [loading, setLoading]   = useState(false)
   const [saving, setSaving]     = useState(false)

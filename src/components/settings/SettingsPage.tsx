@@ -4,7 +4,7 @@ import type { AppSettings } from '../../lib/api/settings'
 import MessageTemplatesManager from './MessageTemplatesManager'
 
 interface SettingsPageProps {
-  initialSettings: AppSettings
+  initialSettingsData: string
 }
 
 type TabKey = 'shop' | 'shipping' | 'payment' | 'line' | 'messages'
@@ -15,8 +15,8 @@ interface LineBotInfo {
   basicId: string
 }
 
-export default function SettingsPage({ initialSettings }: SettingsPageProps) {
-  const [settings, setSettings] = useState<AppSettings>(initialSettings)
+export default function SettingsPage({ initialSettingsData }: SettingsPageProps) {
+  const [settings, setSettings] = useState<AppSettings>(() => JSON.parse(initialSettingsData))
   const [activeTab, setActiveTab] = useState<TabKey>('shop')
   const [saving, setSaving] = useState(false)
   const [showToast, setShowToast] = useState(false)

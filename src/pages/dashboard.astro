@@ -13,9 +13,9 @@ const liveSession = await getActiveLiveSession()
 <AdminLayout title={`Dashboard | ${APP_NAME}`}>
   <DashboardPage
     client:load
-    stats={stats}
-    recentOrders={recentOrders}
-    pendingPayments={pendingPayments}
-    liveSession={liveSession}
+    statsData={JSON.stringify(stats)}
+    recentOrdersData={JSON.stringify(recentOrders)}
+    pendingPaymentsData={JSON.stringify(pendingPayments)}
+    liveSessionData={JSON.stringify(liveSession)}
   />
 </AdminLayout>

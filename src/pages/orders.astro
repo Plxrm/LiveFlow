@@ -11,7 +11,7 @@ const stats = await getOrderStats()
 <AdminLayout title={`Orders | ${APP_NAME}`}>
   <OrdersPage
     client:load
-    initialOrders={orders}
-    stats={stats}
+    initialOrdersData={JSON.stringify(orders)}
+    statsData={JSON.stringify(stats)}
   />
 </AdminLayout>

@@ -8,5 +8,5 @@ const settings = await getSettings()
 ---
 
 <AdminLayout title={`Settings | ${APP_NAME}`}>
-  <SettingsPage client:load initialSettings={settings} />
+  <SettingsPage client:load initialSettingsData={JSON.stringify(settings)} />
 </AdminLayout>

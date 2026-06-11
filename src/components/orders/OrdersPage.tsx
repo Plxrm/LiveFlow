@@ -14,22 +14,15 @@ interface Order {
 }
 
 interface OrdersPageProps {
-  initialOrders: Order[]
-  stats: {
-    pending: number
-    confirmed: number
-    paid: number
-    shipping: number
-    completed: number
-    cancelled: number
-    totalRevenue: number
-  }
+  initialOrdersData: string
+  statsData: string
 }
 
 type OrderStatus = 'all' | 'pending' | 'confirmed' | 'paid' | 'shipping' | 'completed' | 'cancelled'
 
-export default function OrdersPage({ initialOrders, stats }: OrdersPageProps) {
-  const [orders, setOrders] = useState<Order[]>(initialOrders)
+export default function OrdersPage({ initialOrdersData, statsData }: OrdersPageProps) {
+  const [orders, setOrders] = useState<Order[]>(() => JSON.parse(initialOrdersData))
+  const stats = JSON.parse(statsData)
   const [activeTab, setActiveTab] = useState<OrderStatus>('all')
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)

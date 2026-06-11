@@ -12,11 +12,11 @@ interface Customer {
 }
 
 interface CustomersPageProps {
-  initialCustomers: Customer[]
+  initialCustomersData: string
 }
 
-export default function CustomersPage({ initialCustomers }: CustomersPageProps) {
-  const [customers, setCustomers] = useState<Customer[]>(initialCustomers)
+export default function CustomersPage({ initialCustomersData }: CustomersPageProps) {
+  const [customers, setCustomers] = useState<Customer[]>(() => JSON.parse(initialCustomersData))
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
 

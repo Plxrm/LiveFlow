@@ -318,78 +318,80 @@ function TemplateCard({ template, index, onEdit, onDelete, onToggle, onDragStart
       onDragOver={(e) => { e.preventDefault(); setDragOver(true); onDragOver(index) }}
       onDragLeave={() => setDragOver(false)}
       onDrop={() => { setDragOver(false); onDrop() }}
-      className={`group flex items-center gap-3 p-3 rounded-xl border-2 transition-all cursor-default ${
+      className={`p-3 rounded-xl border-2 transition-all cursor-default ${
         dragOver
           ? 'border-blue-400 bg-blue-50'
           : 'border-gray-100 bg-white hover:border-gray-200 hover:shadow-sm'
       } ${!template.is_active ? 'opacity-50' : ''}`}
     >
-      {/* Drag handle */}
-      <div
-        className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing transition-colors flex-shrink-0"
-        title="ลากเพื่อจัดลำดับ"
-      >
-        <GripVertical size={18} />
-      </div>
-
-      {/* Type badge */}
-      <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
-        template.msg_type === 'text'
-          ? 'bg-blue-100 text-blue-700'
-          : template.msg_type === 'image'
-          ? 'bg-green-100 text-green-700'
-          : 'bg-purple-100 text-purple-700'
-      }`}>
-        {template.msg_type === 'text' ? 'ข้อความ' : template.msg_type === 'image' ? 'รูปภาพ' : 'Flex'}
-      </span>
-
-      {/* Content preview */}
-      <div className="flex-1 min-w-0">
-        {template.msg_type === 'image' && template.image_url ? (
-          <div className="flex items-center gap-2">
-            <img
-              src={template.image_url}
-              alt="thumbnail"
-              className="w-10 h-10 rounded-lg object-cover border border-gray-100"
-              onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
-            />
-            <span className="text-xs text-gray-400 truncate">{template.image_url}</span>
+      {/* แถวบน: drag handle + badge + ปุ่ม */}
+      <div className="flex items-center justify-between gap-2 mb-2">
+        <div className="flex items-center gap-2 min-w-0">
+          {/* Drag handle */}
+          <div
+            className="text-gray-300 hover:text-gray-500 cursor-grab active:cursor-grabbing transition-colors flex-shrink-0"
+            title="ลากเพื่อจัดลำดับ"
+          >
+            <GripVertical size={18} />
           </div>
-        ) : (
-          <p className="text-sm text-gray-700 line-clamp-2 leading-snug">
-            {template.content || <span className="text-gray-400 italic">ไม่มีเนื้อหา</span>}
-          </p>
-        )}
+          {/* Type badge */}
+          <span className={`text-xs font-semibold px-2 py-0.5 rounded-full flex-shrink-0 ${
+            template.msg_type === 'text'
+              ? 'bg-blue-100 text-blue-700'
+              : template.msg_type === 'image'
+              ? 'bg-green-100 text-green-700'
+              : 'bg-purple-100 text-purple-700'
+          }`}>
+            {template.msg_type === 'text' ? 'ข้อความ' : template.msg_type === 'image' ? 'รูปภาพ' : 'Flex'}
+          </span>
+        </div>
+
+        {/* ปุ่ม — always visible (not opacity-0) */}
+        <div className="flex items-center gap-1 flex-shrink-0">
+          <button
+            onClick={onToggle}
+            className={`p-1.5 rounded-lg transition-colors ${
+              template.is_active
+                ? 'text-emerald-500 hover:bg-emerald-50'
+                : 'text-gray-400 hover:bg-gray-100'
+            }`}
+            title={template.is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
+          >
+            {template.is_active ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
+          </button>
+          <button
+            onClick={onEdit}
+            className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
+            title="แก้ไข"
+          >
+            <Pencil size={14} />
+          </button>
+          <button
+            onClick={onDelete}
+            className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+            title="ลบ"
+          >
+            <Trash2 size={14} />
+          </button>
+        </div>
       </div>
 
-      {/* Actions */}
-      <div className="flex items-center gap-1 flex-shrink-0 opacity-0 group-hover:opacity-100 transition-opacity">
-        <button
-          onClick={onToggle}
-          className={`p-1.5 rounded-lg transition-colors ${
-            template.is_active
-              ? 'text-emerald-500 hover:bg-emerald-50'
-              : 'text-gray-400 hover:bg-gray-100'
-          }`}
-          title={template.is_active ? 'ปิดใช้งาน' : 'เปิดใช้งาน'}
-        >
-          {template.is_active ? <ToggleRight size={18} /> : <ToggleLeft size={18} />}
-        </button>
-        <button
-          onClick={onEdit}
-          className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-          title="แก้ไข"
-        >
-          <Pencil size={14} />
-        </button>
-        <button
-          onClick={onDelete}
-          className="p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50 rounded-lg transition-colors"
-          title="ลบ"
-        >
-          <Trash2 size={14} />
-        </button>
-      </div>
+      {/* แถวล่าง: เนื้อหา ตัดไม่เกิน 3 บรรทัด */}
+      {template.msg_type === 'image' && template.image_url ? (
+        <div className="flex items-center gap-2">
+          <img
+            src={template.image_url}
+            alt="thumbnail"
+            className="w-10 h-10 rounded-lg object-cover border border-gray-100 flex-shrink-0"
+            onError={(e) => { (e.target as HTMLImageElement).style.display = 'none' }}
+          />
+          <span className="text-xs text-gray-400 line-clamp-2 break-all">{template.image_url}</span>
+        </div>
+      ) : (
+        <p className="text-sm text-gray-600 line-clamp-3 break-all leading-snug">
+          {template.content || <span className="text-gray-400 italic">ไม่มีเนื้อหา</span>}
+        </p>
+      )}
     </div>
   )
 }

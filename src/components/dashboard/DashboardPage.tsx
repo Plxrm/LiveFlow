@@ -22,34 +22,17 @@ const STATUS_CONFIG: Record<string, { icon: typeof CheckCircle; cls: string }> =
 }
 
 interface DashboardProps {
-  stats: {
-    totalOrders: number
-    pendingOrders: number
-    todayRevenue: number
-    totalCustomers: number
-  }
-  recentOrders: Array<{
-    order_number: string
-    total: number
-    status: string
-    created_at: string
-    customer_name: string
-  }>
-  pendingPayments: Array<{
-    order_number: string
-    customer_name: string
-    amount: number
-    slip_url: string | null
-    created_at: string
-  }>
-  liveSession: {
-    id: string
-    title: string
-    product_count: number
-  } | null
+  statsData: string
+  recentOrdersData: string
+  pendingPaymentsData: string
+  liveSessionData: string
 }
 
-export default function DashboardPage({ stats, recentOrders, pendingPayments, liveSession }: DashboardProps) {
+export default function DashboardPage({ statsData, recentOrdersData, pendingPaymentsData, liveSessionData }: DashboardProps) {
+  const stats = JSON.parse(statsData)
+  const recentOrders = JSON.parse(recentOrdersData)
+  const pendingPayments = JSON.parse(pendingPaymentsData)
+  const liveSession = JSON.parse(liveSessionData)
   const STAT_CARDS = [
     {
       label: 'ออเดอร์ทั้งหมด',

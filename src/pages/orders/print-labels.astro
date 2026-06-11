@@ -8,5 +8,5 @@ const orders = await getOrders({ status: 'paid' })
 ---
 
 <AdminLayout title={`พิมพ์ใบปะหน้า | ${APP_NAME}`}>
-  <PrintLabelsPage client:load orders={orders} />
+  <PrintLabelsPage client:load ordersData={JSON.stringify(orders)} />
 </AdminLayout>

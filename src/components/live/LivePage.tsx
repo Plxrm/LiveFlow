@@ -35,11 +35,11 @@ interface LiveProduct {
 }
 
 interface LivePageProps {
-  initialSessions: LiveSession[]
+  initialSessionsData: string
 }
 
-export default function LivePage({ initialSessions }: LivePageProps) {
-  const [sessions, setSessions] = useState<LiveSession[]>(initialSessions)
+export default function LivePage({ initialSessionsData }: LivePageProps) {
+  const [sessions, setSessions] = useState<LiveSession[]>(() => JSON.parse(initialSessionsData))
   const [loading, setLoading] = useState(false)
 
   // Modals & Views

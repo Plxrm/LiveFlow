@@ -8,5 +8,5 @@ const customers = await getCustomers()
 ---
 
 <AdminLayout title={`Customers | ${APP_NAME}`}>
-  <CustomersPage client:load initialCustomers={customers} />
+  <CustomersPage client:load initialCustomersData={JSON.stringify(customers)} />
 </AdminLayout>

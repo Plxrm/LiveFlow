@@ -7,8 +7,9 @@ import {
 } from 'lucide-react'
 import { formatPrice, formatDate, formatTime, formatStatus } from '../../utils/format'
 
-export default function OrderDetailPage({ order: initialOrder }: { order: any }) {
-  const [order, setOrder] = useState(initialOrder)
+export default function OrderDetailPage({ orderData }: { orderData: string }) {
+  const [order, setOrder] = useState(() => JSON.parse(orderData))
+
   const [loading, setLoading] = useState(false)
   const [shipLoading, setShipLoading] = useState(false)
   const [labelPreview, setLabelPreview] = useState<Record<string, boolean>>({})

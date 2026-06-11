@@ -17,7 +17,7 @@ interface Order {
 }
 
 interface PrintLabelsPageProps {
-  orders: Order[]
+  ordersData: string
 }
 
 type LabelStatus = 'idle' | 'creating' | 'done' | 'error'
@@ -30,7 +30,8 @@ interface OrderState {
   errorMsg?: string
 }
 
-export default function PrintLabelsPage({ orders }: PrintLabelsPageProps) {
+export default function PrintLabelsPage({ ordersData }: PrintLabelsPageProps) {
+  const orders: Order[] = JSON.parse(ordersData)
   const [orderState, setOrderState] = useState<Record<string, OrderState>>(
     () => Object.fromEntries(orders.map(o => [o.id, { selected: false, labelStatus: 'idle' }]))
   )

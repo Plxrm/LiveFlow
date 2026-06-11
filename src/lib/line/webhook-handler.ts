@@ -120,7 +120,79 @@ export async function handleLineWebhook(body: any) {
 
     // -- Handle Text Message (CF) --
     if (event.message.type === 'text') {
-      const text = event.message.text
+      const text = event.message.text.trim()
+
+      // ── รวมยอด ──────────────────────────────────────────────────────────────
+      if (text === 'รวมยอด' || text === 'รวม') {
+        const customer = await findOrCreateCustomer(userId)
+        if (!customer) continue
+
+        const { data: pendingOrders } = await supabaseAdmin
+          .from('orders')
+          .select('order_number, total, shipping_fee')
+          .eq('customer_id', customer.id)
+          .eq('status', 'pending')
+          .order('created_at', { ascending: true })
+
+        if (!pendingOrders || pendingOrders.length === 0) {
+          await replyMessage(replyToken, [{ type: 'text', text: 'ไม่มีออเดอร์ที่รอชำระ 😊' }])
+          continue
+        }
+
+        let summary = '📋 สรุปยอดทั้งหมด:\n\n'
+        let grandTotal = 0
+        for (const o of pendingOrders as any[]) {
+          const orderTotal = Number(o.total) + Number(o.shipping_fee || 0)
+          grandTotal += orderTotal
+          summary += `• ${o.order_number} — ฿${orderTotal.toLocaleString()}\n`
+        }
+        summary += `\n💰 รวมทั้งหมด: ฿${grandTotal.toLocaleString()}`
+        summary += `\n📦 จำนวน ${pendingOrders.length} ออเดอร์`
+
+        const summaryMessages: any[] = [{ type: 'text', text: summary }]
+
+        if (settings.promptpay_number) {
+          summaryMessages.push({
+            type: 'flex',
+            altText: 'สแกนจ่ายเงินรวม',
+            contents: {
+              type: 'bubble',
+              body: {
+                type: 'box',
+                layout: 'vertical',
+                contents: [
+                  { type: 'text', text: 'สแกนจ่ายเงินรวม', weight: 'bold', size: 'lg', align: 'center' },
+                  { type: 'image', url: `https://promptpay.io/${settings.promptpay_number}/${grandTotal}.png`, size: 'full', aspectRatio: '1:1' },
+                  { type: 'text', text: `฿${grandTotal.toLocaleString()}`, weight: 'bold', size: 'xl', align: 'center' }
+                ]
+              }
+            }
+          })
+        }
+
+        await replyMessage(replyToken, summaryMessages)
+        continue
+      }
+
+      // ── CF เฉยๆ ──────────────────────────────────────────────────────────────
+      if (text.toUpperCase() === 'CF') {
+        await replyMessage(replyToken, [{
+          type: 'text',
+          text: '🛒 พิมพ์รหัสสินค้าที่ต้องการเลยค่ะ\nเช่น A1, B2, ก1'
+        }])
+        continue
+      }
+
+      // ── ติดต่อแอดมิน ─────────────────────────────────────────────────────────
+      if (text.includes('ติดต่อแอดมิน')) {
+        await replyMessage(replyToken, [{
+          type: 'text',
+          text: '📞 แอดมินจะติดต่อกลับโดยเร็วที่สุดค่ะ\nรอสักครู่นะคะ 🙏'
+        }])
+        continue
+      }
+
+      // ── CF parsing ────────────────────────────────────────────────────────────
       const parsed = parseCFMessage(text)
 
       if (!parsed) continue
@@ -300,6 +372,26 @@ export async function handleLineWebhook(body: any) {
               }
             }
           })
+        }
+      }
+
+      // เพิ่ม quickReply buttons ใน message สุดท้าย
+      if (replyMessages.length > 0) {
+        replyMessages[replyMessages.length - 1].quickReply = {
+          items: [
+            {
+              type: 'action',
+              action: { type: 'message', label: '🛒 CF ต่อ', text: 'CF' }
+            },
+            {
+              type: 'action',
+              action: { type: 'message', label: '📋 รวมยอด', text: 'รวมยอด' }
+            },
+            {
+              type: 'action',
+              action: { type: 'message', label: '❓ ติดต่อแอดมิน', text: 'ติดต่อแอดมิน' }
+            }
+          ]
         }
       }
 
