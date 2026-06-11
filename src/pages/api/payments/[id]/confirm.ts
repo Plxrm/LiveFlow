@@ -1,23 +1,17 @@
 import type { APIRoute } from 'astro'
 
-export const PUT: APIRoute = async ({ params }) => {
+export const PUT: APIRoute = async ({ params, request }) => {
   try {
-    console.log('Confirm payment:', params.id)
-
-    const { getSupabaseAdmin } = await import(
-      '../../../../lib/supabase/admin'
-    )
+    const { getSupabaseAdmin } = await import('../../../../lib/supabase/admin')
     const supabaseAdmin = getSupabaseAdmin()
-
     if (!supabaseAdmin) {
-      console.error('Supabase not configured')
       return new Response(
         JSON.stringify({ error: 'DB not configured' }),
         { status: 503, headers: { 'Content-Type': 'application/json' } }
       )
     }
 
-    // อัปเดต payment status
+    // 1. อัปเดต payment
     const { data: payment, error: payError } = await supabaseAdmin
       .from('payments')
       .update({
@@ -25,78 +19,128 @@ export const PUT: APIRoute = async ({ params }) => {
         confirmed_at: new Date().toISOString()
       })
       .eq('id', params.id)
-      .select('*, orders(id, order_number)')
+      .select()
       .single()
 
-    console.log('Payment update:', { payment, payError })
-
-    if (payError) {
+    if (payError || !payment) {
       return new Response(
-        JSON.stringify({ error: payError.message }),
+        JSON.stringify({ error: payError?.message || 'Payment not found' }),
         { status: 500, headers: { 'Content-Type': 'application/json' } }
       )
     }
 
-    // อัปเดต order status → paid
-    if ((payment as any)?.orders?.id) {
-      const { error: orderError } = await supabaseAdmin
-        .from('orders')
-        .update({ status: 'paid' })
-        .eq('id', (payment as any).orders.id)
+    // 2. ดึง order + customer
+    const { data: order } = await supabaseAdmin
+      .from('orders')
+      .select('*, customers(*)')
+      .eq('id', payment.order_id)
+      .single()
 
-      console.log('Order update:', { orderError })
+    if (!order) {
+      return new Response(
+        JSON.stringify({ error: 'Order not found' }),
+        { status: 500, headers: { 'Content-Type': 'application/json' } }
+      )
     }
 
-    // ส่ง LINE แจ้งลูกค้า (ถ้าพังก็ไม่ block)
+    // 3. อัปเดต order status → paid
+    await supabaseAdmin
+      .from('orders')
+      .update({ status: 'paid' })
+      .eq('id', order.id)
+
+    // 4. ส่ง LINE แจ้งลูกค้า
     try {
-      const { getSettings } = await import('../../../../lib/api/settings')
-      const { getTemplatesByStep, buildMessages } = await import('../../../../lib/api/messages')
       const { pushMessage } = await import('../../../../lib/line/client')
-      const { createOrderShipment, hasCompleteAddress } = await import('../../../../lib/api/shipping')
+      const { getTemplatesByStep, buildMessages } = await import('../../../../lib/api/messages')
+      const { getSettings } = await import('../../../../lib/api/settings')
 
-      const settings = await getSettings()
-      const orderId = (payment as any)?.orders?.id
+      const customer = order.customers
+      if (customer?.line_user_id) {
+        // ส่งข้อความยืนยันชำระเงิน
+        const templates = await getTemplatesByStep('payment_confirmed')
+        const variables = {
+          order_number: order.order_number,
+          amount: String(payment.amount),
+          customer_name: customer.display_name || 'ลูกค้า'
+        }
 
-      if (orderId) {
-        const { data: order } = await supabaseAdmin
-          .from('orders')
-          .select('*, customers(*)')
-          .eq('id', orderId)
-          .single()
+        let messages: any[] = []
+        if (templates.length > 0) {
+          messages = buildMessages(templates, variables)
+        } else {
+          messages = [{
+            type: 'text',
+            text: `✅ ยืนยันการชำระเงินเรียบร้อย!\n📋 ออเดอร์: ${order.order_number}\n💰 จำนวน ฿${Number(payment.amount).toLocaleString()}`
+          }]
+        }
 
-        const customer = (order as any)?.customers
+        // 5. เช็คที่อยู่ลูกค้า
+        const hasAddress = customer.address_detail
+          || customer.address
+          || (customer.subdistrict && customer.zipcode)
 
-        if (settings.auto_ship_on_payment && customer) {
-          if (hasCompleteAddress(customer)) {
-            const shipResult = await createOrderShipment(orderId)
-            console.log('Auto-ship result:', shipResult)
-          } else if (customer.line_user_id) {
-            const checkoutUrl = import.meta.env.PUBLIC_CHECKOUT_URL || ''
-            const confirmedTpls = await getTemplatesByStep('payment_confirmed')
-            const msgs = confirmedTpls.length > 0
-              ? buildMessages(confirmedTpls, {
-                  order_number: (order as any)?.order_number || '',
-                  amount: String((payment as any)?.amount || ''),
-                  customer_name: customer.display_name || 'ลูกค้า',
-                })
-              : [{
-                  type: 'text',
-                  text: `✅ ยืนยันการชำระเงินแล้ว!\n\nกรุณากรอกที่อยู่จัดส่ง:\n${checkoutUrl}?order=${orderId}`
-                }]
-            await pushMessage(customer.line_user_id, msgs)
+        if (!hasAddress) {
+          // ไม่มีที่อยู่ → ส่งลิงก์กรอก
+          const settings = await getSettings()
+          const baseUrl = 'https://liveflow.shop'
+
+          messages.push({
+            type: 'text',
+            text: '📮 กรุณากรอกที่อยู่จัดส่ง:\n'
+              + `${baseUrl}/checkout?order=${order.id}`,
+            quickReply: {
+              items: [
+                {
+                  type: 'action',
+                  action: {
+                    type: 'uri',
+                    label: '📮 กรอกที่อยู่',
+                    uri: `${baseUrl}/checkout?order=${order.id}`
+                  }
+                },
+                {
+                  type: 'action',
+                  action: {
+                    type: 'message',
+                    label: '❓ ติดต่อแอดมิน',
+                    text: 'ติดต่อแอดมิน'
+                  }
+                }
+              ]
+            }
+          })
+        } else {
+          // มีที่อยู่แล้ว → แจ้งกำลังจัดส่ง
+          messages.push({
+            type: 'text',
+            text: '📦 กำลังเตรียมจัดส่งสินค้าให้คุณ\nรอรับพัสดุได้เลยค่ะ'
+          })
+
+          // Auto-ship ถ้าเปิดอยู่
+          try {
+            const settings = await getSettings()
+            if (settings.auto_ship_on_payment) {
+              const { createOrderShipment } = await import('../../../../lib/api/shipping')
+              await createOrderShipment(order.id)
+            }
+          } catch (shipErr) {
+            console.error('Auto-ship error:', shipErr)
           }
         }
+
+        await pushMessage(customer.line_user_id, messages)
       }
-    } catch (e) {
-      console.error('Post-confirm error (non-fatal):', e)
+    } catch (lineErr) {
+      console.error('LINE notify error:', lineErr)
     }
 
     return new Response(
-      JSON.stringify({ success: true, payment }),
+      JSON.stringify({ success: true }),
       { status: 200, headers: { 'Content-Type': 'application/json' } }
     )
   } catch (err) {
-    console.error('Confirm fatal error:', err)
+    console.error('Confirm error:', err)
     return new Response(
       JSON.stringify({ error: String(err) }),
       { status: 500, headers: { 'Content-Type': 'application/json' } }

@@ -1,9 +1,12 @@
 ---
 import CustomerLayout from '../layouts/CustomerLayout.astro'
-import { APP_NAME } from '../lib/constants'
 import CheckoutPage from '../components/checkout/CheckoutPage'
----
 
-<CustomerLayout title={`Checkout | ${APP_NAME}`}>
-  <CheckoutPage client:only="react" />
+const orderId = Astro.url.searchParams.get('order') || ''
+---
+<CustomerLayout title="กรอกที่อยู่จัดส่ง">
+  <CheckoutPage
+    client:only="react"
+    orderId={orderId}
+  />
 </CustomerLayout>
