@@ -15,6 +15,281 @@ interface LineBotInfo {
   basicId: string
 }
 
+// ─── Payment Tab Component ────────────────────────────────────────────────────
+
+const BANKS = [
+  'ธนาคารกสิกรไทย',
+  'ธนาคารกรุงเทพ',
+  'ธนาคารไทยพาณิชย์',
+  'ธนาคารกรุงไทย',
+  'ธนาคารออมสิน',
+  'ธนาคารทหารไทยธนชาต',
+  'อื่นๆ',
+]
+
+interface PaymentTabProps {
+  settings: AppSettings
+  handleChange: (field: keyof AppSettings, value: any) => void
+}
+
+function PaymentTab({ settings, handleChange }: PaymentTabProps) {
+  const [uploading, setUploading] = useState(false)
+  const method = settings.payment_method || 'text'
+
+  const handleQRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    setUploading(true)
+    try {
+      const formData = new FormData()
+      formData.append('file', file)
+      const res = await fetch('/api/settings/upload-qr', {
+        method: 'POST',
+        body: formData,
+      })
+      const data = await res.json()
+      if (res.ok && data.url) {
+        handleChange('payment_qr_image', data.url)
+      } else {
+        alert('อัปโหลดล้มเหลว: ' + (data.error || 'Unknown error'))
+      }
+    } catch (err: any) {
+      alert('เกิดข้อผิดพลาด: ' + err.message)
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const methodOptions: { value: AppSettings['payment_method']; label: string; sub: string }[] = [
+    { value: 'text',          label: 'ข้อความบัญชีธนาคาร',       sub: 'ส่งข้อความเลขบัญชี ชื่อ ธนาคาร' },
+    { value: 'image',         label: 'รูป QR Code ของร้าน',       sub: 'อัปโหลด QR ร้านคุณเอง' },
+    { value: 'promptpay',     label: 'PromptPay อัตโนมัติ',       sub: 'QR มียอดเงินฝังอัตโนมัติ (แนะนำ)' },
+    { value: 'promptpay_text', label: 'PromptPay + ข้อความสำรอง', sub: 'QR อัตโนมัติ + ข้อความบัญชีสำรอง' },
+  ]
+
+  return (
+    <div className="flex flex-col gap-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <h2 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">การชำระเงิน</h2>
+
+      <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-xs text-amber-700 flex items-center gap-2">
+        <span>📦</span>
+        <span>ค่าส่งตั้งค่าแยกตามสินค้าแต่ละชิ้นในหน้าคลังสินค้า</span>
+      </div>
+
+      {/* ── เลือกวิธีชำระเงิน ─────────────────────── */}
+      <div className="flex flex-col gap-3">
+        <label className="text-sm font-semibold text-gray-700">เลือกวิธีส่งช่องทางชำระเงินให้ลูกค้า:</label>
+        <div className="flex flex-col gap-2">
+          {methodOptions.map(opt => (
+            <label
+              key={opt.value}
+              className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                method === opt.value
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300 bg-white'
+              }`}
+            >
+              <input
+                type="radio"
+                name="payment_method"
+                value={opt.value}
+                checked={method === opt.value}
+                onChange={() => handleChange('payment_method', opt.value)}
+                className="mt-0.5 accent-blue-600"
+              />
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold text-gray-800 flex items-center gap-2">
+                  {opt.label}
+                  {opt.value === 'promptpay' && (
+                    <span className="text-xs font-bold px-2 py-0.5 bg-green-100 text-green-700 rounded-full">แนะนำ</span>
+                  )}
+                </span>
+                <span className="text-xs text-gray-500">{opt.sub}</span>
+              </div>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      {/* ── แบบ 1: ข้อความบัญชีธนาคาร ─────────────── */}
+      {(method === 'text' || method === 'promptpay_text') && (
+        <div className="flex flex-col gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">
+            {method === 'promptpay_text' ? '🏦 ข้อมูลบัญชีสำรอง' : '🏦 ข้อมูลบัญชีธนาคาร'}
+          </p>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">ธนาคาร</label>
+            <select
+              value={settings.bank_name}
+              onChange={e => handleChange('bank_name', e.target.value)}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+            >
+              <option value="">-- เลือกธนาคาร --</option>
+              {BANKS.map(b => <option key={b} value={b}>{b}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">เลขบัญชี</label>
+            <input
+              type="text"
+              value={settings.bank_account_number}
+              onChange={e => handleChange('bank_account_number', e.target.value)}
+              placeholder="เช่น 123-4-56789-0"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">ชื่อบัญชี</label>
+            <input
+              type="text"
+              value={settings.bank_account_name}
+              onChange={e => handleChange('bank_account_name', e.target.value)}
+              placeholder="ชื่อ-นามสกุล"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+            />
+          </div>
+          {method === 'text' && (
+            <div className="bg-white border border-dashed border-gray-300 rounded-xl p-4 text-sm text-gray-700 leading-relaxed">
+              <p className="text-xs font-bold text-gray-400 mb-2">👁 Preview ข้อความที่จะส่ง:</p>
+              <pre className="whitespace-pre-wrap font-sans text-sm text-gray-700">
+{`💳 ช่องทางชำระเงิน
+🏦 ${settings.bank_name || 'ธนาคาร...'}
+📋 เลขบัญชี: ${settings.bank_account_number || 'xxx-x-xxxxx-x'}
+👤 ชื่อ: ${settings.bank_account_name || 'ชื่อบัญชี...'}
+💰 ยอดชำระ: ฿XXX
+📄 ออเดอร์: LFXXXXXXXX
+
+โอนแล้วส่งสลิปมาได้เลยค่ะ`}
+              </pre>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── แบบ 2: รูป QR Code ─────────────────────── */}
+      {method === 'image' && (
+        <div className="flex flex-col gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">📷 QR Code ของร้าน</p>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">อัปโหลดรูป QR Code</label>
+            <label className={`flex items-center justify-center gap-2 border-2 border-dashed rounded-xl p-6 cursor-pointer transition-all ${
+              uploading ? 'border-blue-300 bg-blue-50' : 'border-gray-300 hover:border-blue-400 hover:bg-blue-50'
+            }`}>
+              <input type="file" accept="image/*" className="hidden" onChange={handleQRUpload} disabled={uploading} />
+              {uploading ? (
+                <span className="text-sm text-blue-600">⏳ กำลังอัปโหลด...</span>
+              ) : (
+                <span className="text-sm text-gray-500">📁 คลิกเพื่อเลือกรูป QR (PNG, JPG)</span>
+              )}
+            </label>
+            {settings.payment_qr_image && (
+              <div className="flex flex-col items-center gap-2 p-3 bg-white rounded-xl border border-gray-200">
+                <img
+                  src={settings.payment_qr_image}
+                  alt="QR Code Preview"
+                  className="w-40 h-40 object-contain rounded-lg border border-gray-100"
+                />
+                <p className="text-xs text-gray-400">QR ที่จะส่งให้ลูกค้า</p>
+              </div>
+            )}
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">ข้อความเพิ่มเติม (optional)</label>
+            <textarea
+              value={settings.payment_qr_text}
+              onChange={e => handleChange('payment_qr_text', e.target.value)}
+              placeholder="เช่น สแกนจ่ายตามยอด แจ้งสลิปหลังโอน"
+              rows={2}
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors resize-none"
+            />
+          </div>
+        </div>
+      )}
+
+      {/* ── แบบ 3+4: PromptPay ─────────────────────── */}
+      {(method === 'promptpay' || method === 'promptpay_text') && (
+        <div className="flex flex-col gap-4 p-4 bg-gray-50 rounded-xl border border-gray-200">
+          <p className="text-xs font-bold text-gray-600 uppercase tracking-wide">⚡ PromptPay</p>
+          {method === 'promptpay' && (
+            <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 text-xs text-green-700">
+              ✅ <strong>ข้อดี:</strong> QR จะมียอดเงินฝังอัตโนมัติ ลูกค้าสแกนจ่ายได้เลยไม่ต้องกรอกยอด
+            </div>
+          )}
+          {method === 'promptpay_text' && (
+            <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-xs text-blue-700">
+              ✅ <strong>ข้อดี:</strong> ส่ง QR อัตโนมัติ + ข้อความบัญชีสำรอง กรณีลูกค้าสแกนไม่ได้
+            </div>
+          )}
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">เบอร์ PromptPay</label>
+            <input
+              type="text"
+              value={settings.promptpay_number}
+              onChange={e => handleChange('promptpay_number', e.target.value)}
+              placeholder="เบอร์โทร 10 หลัก หรือ เลขบัตร 13 หลัก"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">ชื่อบัญชี PromptPay</label>
+            <input
+              type="text"
+              value={settings.promptpay_name}
+              onChange={e => handleChange('promptpay_name', e.target.value)}
+              placeholder="ชื่อ-นามสกุล"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+            />
+          </div>
+          {settings.promptpay_number && (
+            <div className="flex flex-col items-center gap-2 p-4 bg-white rounded-xl border border-gray-200">
+              <p className="text-xs font-bold text-gray-400 mb-1">👁 Preview QR (ตัวอย่างยอด ฿100)</p>
+              <img
+                src={`https://promptpay.io/${settings.promptpay_number}/100.png`}
+                alt="PromptPay QR Preview"
+                className="w-36 h-36 object-contain"
+              />
+              {settings.promptpay_name && (
+                <p className="text-xs text-gray-500">{settings.promptpay_name}</p>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* ── Auto-confirm / Auto-ship ─────────────────── */}
+      <div className="flex flex-col gap-4 pt-2 border-t border-gray-100">
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.auto_confirm_payment}
+            onChange={e => handleChange('auto_confirm_payment', e.target.checked)}
+            className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+          />
+          <div>
+            <p className="text-sm font-semibold text-gray-800">ยืนยันยอดชำระเงินอัตโนมัติ</p>
+            <p className="text-xs text-gray-500 mt-0.5">ระบบจะพยายามตรวจสอบสลิปโอนเงินโดยอัตโนมัติเมื่อลูกค้าอัปโหลด</p>
+          </div>
+        </label>
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={settings.auto_ship_on_payment}
+            onChange={e => handleChange('auto_ship_on_payment', e.target.checked)}
+            className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
+          />
+          <div>
+            <p className="text-sm font-semibold text-gray-800">สร้างพัสดุ KEX อัตโนมัติหลังยืนยันชำระ</p>
+            <p className="text-xs text-gray-500 mt-0.5">หากลูกค้ากรอกที่อยู่ครบ ระบบจะสร้างพัสดุ KEX Express และส่ง tracking ทาง LINE ทันที</p>
+          </div>
+        </label>
+      </div>
+    </div>
+  )
+}
+
+// ─── Main SettingsPage ────────────────────────────────────────────────────────
+
 export default function SettingsPage({ initialSettingsData }: SettingsPageProps) {
   const [settings, setSettings] = useState<AppSettings>(() => JSON.parse(initialSettingsData))
   const [activeTab, setActiveTab] = useState<TabKey>('shop')
@@ -256,63 +531,7 @@ export default function SettingsPage({ initialSettingsData }: SettingsPageProps)
 
           {/* ─── Tab: การชำระเงิน ──────────────────────────────────────── */}
           {activeTab === 'payment' && (
-            <div className="flex flex-col gap-6 max-w-xl animate-in fade-in slide-in-from-bottom-2 duration-300">
-              <h2 className="text-lg font-bold text-gray-800 border-b border-gray-100 pb-2">การชำระเงิน</h2>
-
-              <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-xs text-amber-700 flex items-center gap-2">
-                <span>📦</span>
-                <span>ค่าส่งตั้งค่าแยกตามสินค้าแต่ละชิ้นในหน้าคลังสินค้า</span>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-gray-700">เบอร์พร้อมเพย์ (PromptPay)</label>
-                  <input
-                    type="text"
-                    value={settings.promptpay_number}
-                    onChange={e => handleChange('promptpay_number', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-sm font-semibold text-gray-700">ชื่อบัญชีรับเงิน</label>
-                  <input
-                    type="text"
-                    value={settings.promptpay_name}
-                    onChange={e => handleChange('promptpay_name', e.target.value)}
-                    className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
-                  />
-                </div>
-              </div>
-
-              <div className="flex flex-col gap-4 pt-2 border-t border-gray-100">
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.auto_confirm_payment}
-                    onChange={e => handleChange('auto_confirm_payment', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">ยืนยันยอดชำระเงินอัตโนมัติ</p>
-                    <p className="text-xs text-gray-500 mt-0.5">ระบบจะพยายามตรวจสอบสลิปโอนเงินโดยอัตโนมัติเมื่อลูกค้าอัปโหลด</p>
-                  </div>
-                </label>
-
-                <label className="flex items-center gap-3 cursor-pointer">
-                  <input
-                    type="checkbox"
-                    checked={settings.auto_ship_on_payment}
-                    onChange={e => handleChange('auto_ship_on_payment', e.target.checked)}
-                    className="w-5 h-5 text-blue-600 rounded border-gray-300 focus:ring-blue-500"
-                  />
-                  <div>
-                    <p className="text-sm font-semibold text-gray-800">สร้างพัสดุ KEX อัตโนมัติหลังยืนยันชำระ</p>
-                    <p className="text-xs text-gray-500 mt-0.5">หากลูกค้ากรอกที่อยู่ครบ ระบบจะสร้างพัสดุ KEX Express และส่ง tracking ทาง LINE ทันที</p>
-                  </div>
-                </label>
-              </div>
-            </div>
+            <PaymentTab settings={settings} handleChange={handleChange} />
           )}
 
           {/* ─── Tab: LINE OA ───────────────────────────────────────────── */}

@@ -17,9 +17,23 @@ export interface AppSettings {
   line_channel_id: string
   line_channel_secret: string
   line_channel_access_token: string
-  // การชำระเงิน
+
+  // วิธีชำระเงิน
+  payment_method: 'text' | 'image' | 'promptpay' | 'promptpay_text'
+
+  // แบบ 1: ข้อความบัญชีธนาคาร
+  bank_name: string
+  bank_account_number: string
+  bank_account_name: string
+
+  // แบบ 2: รูป QR
+  payment_qr_image: string
+  payment_qr_text: string
+
+  // แบบ 3+4: PromptPay
   promptpay_number: string
   promptpay_name: string
+
   auto_confirm_payment: boolean
   auto_ship_on_payment: boolean
 }
@@ -38,8 +52,16 @@ const defaultSettings: AppSettings = {
   line_channel_id: '',
   line_channel_secret: '',
   line_channel_access_token: '',
+
+  payment_method: 'text',
+  bank_name: '',
+  bank_account_number: '',
+  bank_account_name: '',
+  payment_qr_image: '',
+  payment_qr_text: '',
   promptpay_number: '',
   promptpay_name: '',
+
   auto_confirm_payment: false,
   auto_ship_on_payment: false,
 }

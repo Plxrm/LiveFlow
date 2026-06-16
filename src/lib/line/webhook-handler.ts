@@ -5,6 +5,7 @@ import { generateOrderNumber } from '../api/orders'
 import { getSettings } from '../api/settings'
 import { createOrderShipment, hasCompleteAddress } from '../api/shipping'
 import { getTemplatesByStep, buildMessages } from '../api/messages'
+import { buildPaymentMessages } from './payment-message'
 
 
 export async function handleLineWebhook(body: any) {
@@ -151,24 +152,8 @@ export async function handleLineWebhook(body: any) {
 
         const summaryMessages: any[] = [{ type: 'text', text: summary }]
 
-        if (settings.promptpay_number) {
-          summaryMessages.push({
-            type: 'flex',
-            altText: 'สแกนจ่ายเงินรวม',
-            contents: {
-              type: 'bubble',
-              body: {
-                type: 'box',
-                layout: 'vertical',
-                contents: [
-                  { type: 'text', text: 'สแกนจ่ายเงินรวม', weight: 'bold', size: 'lg', align: 'center' },
-                  { type: 'image', url: `https://promptpay.io/${settings.promptpay_number}/${grandTotal}.png`, size: 'full', aspectRatio: '1:1' },
-                  { type: 'text', text: `฿${grandTotal.toLocaleString()}`, weight: 'bold', size: 'xl', align: 'center' }
-                ]
-              }
-            }
-          })
-        }
+        const paymentMsgs = await buildPaymentMessages('(รวมยอด)', grandTotal)
+        summaryMessages.push(...paymentMsgs)
 
         await replyMessage(replyToken, summaryMessages)
         continue
@@ -360,25 +345,8 @@ export async function handleLineWebhook(body: any) {
           }
         ]
 
-        if (settings.promptpay_number) {
-          replyMessages.push({
-            type: 'flex',
-            altText: 'สแกนจ่ายเงิน',
-            contents: {
-              type: 'bubble',
-              body: {
-                type: 'box',
-                layout: 'vertical',
-                contents: [
-                  { type: 'text', text: 'สแกนจ่ายเงิน', weight: 'bold', size: 'lg' },
-                  { type: 'image', url: `https://promptpay.io/${settings.promptpay_number}/${total}.png`, size: 'full', aspectRatio: '1:1' },
-                  { type: 'text', text: `฿${total.toLocaleString()}`, weight: 'bold', size: 'xl', align: 'center' },
-                  { type: 'text', text: `ออเดอร์: ${orderNumber}`, size: 'sm', color: '#888888', align: 'center' }
-                ]
-              }
-            }
-          })
-        }
+        const paymentMsgs = await buildPaymentMessages(orderNumber, total)
+        replyMessages.push(...paymentMsgs)
       }
 
       // เพิ่ม quickReply buttons ใน message สุดท้าย
