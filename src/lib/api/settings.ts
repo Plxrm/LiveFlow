@@ -4,6 +4,7 @@ const supabaseAdmin = getSupabaseAdmin()
 export interface AppSettings {
   shop_name: string
   shop_logo_url: string
+  site_url: string   // URL เว็บไซต์ ใช้สร้างลิงก์ส่งลูกค้า
   // ข้อมูลผู้ส่ง KEX Express
   shop_sender_name: string
   shop_phone: string
@@ -36,11 +37,24 @@ export interface AppSettings {
 
   auto_confirm_payment: boolean
   auto_ship_on_payment: boolean
+
+  // หมดเวลาชำระ
+  payment_timeout_minutes: number
+  warning_before_timeout_minutes: number
+  auto_ban_on_timeout: boolean
+  ban_after_unpaid_count: number
+
+  // วิธีตรวจสลิป
+  slip_verify_method: 'manual' | 'auto'
+  checkslip_api_token: string
+  checkslip_merchant_code: string
+  checkslip_webhook_secret: string
 }
 
 const defaultSettings: AppSettings = {
   shop_name: 'LiveFlow',
   shop_logo_url: '',
+  site_url: '',
   shop_sender_name: '',
   shop_phone: '',
   shop_address: '',
@@ -64,6 +78,16 @@ const defaultSettings: AppSettings = {
 
   auto_confirm_payment: false,
   auto_ship_on_payment: false,
+
+  payment_timeout_minutes: 30,
+  warning_before_timeout_minutes: 5,
+  auto_ban_on_timeout: false,
+  ban_after_unpaid_count: 2,
+
+  slip_verify_method: 'manual',
+  checkslip_api_token: '',
+  checkslip_merchant_code: '',
+  checkslip_webhook_secret: '',
 }
 
 export async function getSettings(): Promise<AppSettings> {

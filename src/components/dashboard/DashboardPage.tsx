@@ -26,13 +26,17 @@ interface DashboardProps {
   recentOrdersData: string
   pendingPaymentsData: string
   liveSessionData: string
+  settingsData: string
 }
 
-export default function DashboardPage({ statsData, recentOrdersData, pendingPaymentsData, liveSessionData }: DashboardProps) {
+export default function DashboardPage({ statsData, recentOrdersData, pendingPaymentsData, liveSessionData, settingsData }: DashboardProps) {
   const stats = JSON.parse(statsData)
   const recentOrders = JSON.parse(recentOrdersData)
   const pendingPayments = JSON.parse(pendingPaymentsData)
   const liveSession = JSON.parse(liveSessionData)
+  const settings = JSON.parse(settingsData)
+
+  const isAutoVerify = settings?.slip_verify_method === 'auto'
 
   console.log('Pending payments data:', JSON.stringify(pendingPayments, null, 2))
 
@@ -204,9 +208,10 @@ export default function DashboardPage({ statsData, recentOrdersData, pendingPaym
       </div>
 
       {/* Right Panel — Slip Verification */}
-      <div className="lg:w-[320px] xl:w-[360px] shrink-0 flex flex-col gap-4">
-        <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
-          รอยืนยันยอด
+      {!isAutoVerify && (
+        <div className="lg:w-[320px] xl:w-[360px] shrink-0 flex flex-col gap-4">
+          <h3 className="text-lg font-semibold text-gray-800 flex items-center gap-2">
+            รอยืนยันยอด
           {pendingPayments.length > 0 && (
             <span className="ml-auto bg-blue-100 text-blue-700 text-xs font-bold px-2 py-0.5 rounded-full">
               {pendingPayments.length} รายการ
@@ -267,7 +272,8 @@ export default function DashboardPage({ statsData, recentOrdersData, pendingPaym
             <p className="text-sm font-medium">ไม่มีสลิปรอตรวจ</p>
           </div>
         )}
-      </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -1,0 +1,15 @@
+---
+import AdminLayout from '../layouts/AdminLayout.astro'
+import BlacklistPage from '../components/admin/BlacklistPage'
+import { getBannedCustomers } from '../lib/api/customers'
+import { APP_NAME } from '../lib/constants'
+
+const customers = await getBannedCustomers()
+---
+
+<AdminLayout title={`Blacklist | ${APP_NAME}`}>
+  <BlacklistPage
+    client:only="react"
+    customersData={JSON.stringify(customers)}
+  />
+</AdminLayout>

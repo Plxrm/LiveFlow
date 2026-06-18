@@ -59,3 +59,72 @@ export async function getCustomerById(id: string) {
     return null
   }
 }
+
+export async function getBannedCustomers() {
+  const supabaseAdmin = getSupabaseAdmin()
+  if (!supabaseAdmin) return []
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('customers')
+      .select('*')
+      .eq('is_banned', true)
+      .order('banned_at', { ascending: false })
+    if (error) throw error
+    return data || []
+  } catch (error) {
+    console.error('Error in getBannedCustomers:', error)
+    return []
+  }
+}
+
+export async function banCustomer(id: string, reason: string) {
+  const supabaseAdmin = getSupabaseAdmin()
+  if (!supabaseAdmin) return null
+  try {
+    // ดึง ban_count ปัจจุบันก่อน
+    const { data: existing } = await supabaseAdmin
+      .from('customers')
+      .select('ban_count')
+      .eq('id', id)
+      .single()
+
+    const { data, error } = await supabaseAdmin
+      .from('customers')
+      .update({
+        is_banned: true,
+        ban_reason: reason,
+        banned_at: new Date().toISOString(),
+        ban_count: (existing?.ban_count || 0) + 1,
+      })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error(`Error in banCustomer(${id}):`, error)
+    return null
+  }
+}
+
+export async function unbanCustomer(id: string) {
+  const supabaseAdmin = getSupabaseAdmin()
+  if (!supabaseAdmin) return null
+  try {
+    const { data, error } = await supabaseAdmin
+      .from('customers')
+      .update({
+        is_banned: false,
+        ban_reason: null,
+        banned_at: null,
+      })
+      .eq('id', id)
+      .select()
+      .single()
+    if (error) throw error
+    return data
+  } catch (error) {
+    console.error(`Error in unbanCustomer(${id}):`, error)
+    return null
+  }
+}

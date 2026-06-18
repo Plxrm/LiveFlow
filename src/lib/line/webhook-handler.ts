@@ -5,7 +5,7 @@ import { generateOrderNumber } from '../api/orders'
 import { getSettings } from '../api/settings'
 import { createOrderShipment, hasCompleteAddress } from '../api/shipping'
 import { getTemplatesByStep, buildMessages } from '../api/messages'
-import { buildPaymentMessages } from './payment-message'
+import { getTemplatesByStep, buildMessages } from '../api/messages'
 
 
 export async function handleLineWebhook(body: any) {
@@ -33,89 +33,24 @@ export async function handleLineWebhook(body: any) {
       const customer = await findOrCreateCustomer(userId)
       if (!customer) continue
 
-      const { data: order } = await supabaseAdmin.from('orders')
-        .select('*')
-        .eq('customer_id', customer.id)
-        .in('status', ['pending', 'confirmed'])
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle()
+      const { getBaseUrl } = await import('../utils/get-base-url')
+      const baseUrl = await getBaseUrl()
 
-      if (!order) {
-        const noOrderTpls = await getTemplatesByStep('slip_no_order')
-        const noOrderMsgs = noOrderTpls.length > 0
-          ? buildMessages(noOrderTpls, {})
-          : [{ type: 'text', text: 'ไม่พบออเดอร์ที่รอชำระเงิน' }]
-        await replyMessage(replyToken, noOrderMsgs)
-        continue
-      }
-
-      const buffer = await getMessageContent(event.message.id)
-      if (!buffer) {
-         await replyMessage(replyToken, [{ type: 'text', text: 'ไม่สามารถดึงรูปสลิปได้' }])
-         continue
-      }
-      
-      const fileName = `${order.id}-${Date.now()}.jpg`
-      const { error: uploadError } = await supabaseAdmin.storage
-        .from('slips')
-        .upload(fileName, buffer, { contentType: 'image/jpeg' })
-
-      if (uploadError) {
-        console.error('Upload Error:', uploadError)
-        await replyMessage(replyToken, [{ type: 'text', text: 'อัปโหลดสลิปไม่สำเร็จ กรุณาลองใหม่' }])
-        continue
-      }
-      
-      const { data: publicUrlData } = supabaseAdmin.storage.from('slips').getPublicUrl(fileName)
-      const slipUrl = publicUrlData.publicUrl
-
-      await supabaseAdmin.from('payments').insert([{
-        order_id: order.id,
-        method: 'transfer',
-        amount: order.total,
-        slip_url: slipUrl,
-        status: 'pending'
-      }])
-
-      await supabaseAdmin.from('orders').update({ status: 'confirmed' }).eq('id', order.id)
-
-      const slipTpls = await getTemplatesByStep('slip_received')
-      const slipMsgs = slipTpls.length > 0
-        ? buildMessages(slipTpls, {
-            order_number: order.order_number || '',
-            amount: String(order.total || ''),
-          })
-        : [{ type: 'text', text: 'ได้รับสลิปแล้ว รอแอดมินตรวจสอบ' }]
-      await replyMessage(replyToken, slipMsgs)
-
-      // ─── Auto-ship trigger (ถ้า auto_confirm + auto_ship เปิดอยู่) ───
-      if (settings.auto_confirm_payment && settings.auto_ship_on_payment) {
-        // ยืนยัน payment ทันที
-        await supabaseAdmin
-          .from('payments')
-          .update({ status: 'confirmed', confirmed_at: new Date().toISOString() })
-          .eq('order_id', order.id)
-          .eq('status', 'pending')
-        await supabaseAdmin.from('orders').update({ status: 'paid' }).eq('id', order.id)
-
-        const { data: customerData } = await supabaseAdmin
-          .from('customers').select('*').eq('id', order.customer_id).single()
-
-        if (customerData && hasCompleteAddress(customerData)) {
-          await createOrderShipment(order.id)
-        } else if (customerData?.line_user_id) {
-          const checkoutUrl = import.meta.env.PUBLIC_CHECKOUT_URL || ''
-          await pushMessage(customerData.line_user_id, [{
-            type: 'text',
-            text:
-              `✅ ยืนยันการชำระเงินแล้ว!\n\n` +
-              `กรุณากรอกที่อยู่จัดส่งเพื่อให้ระบบจัดส่งพัสดุให้คุณ:\n` +
-              `${checkoutUrl}?order=${order.id}`
-          }])
+      await replyMessage(replyToken, [{
+        type: 'text',
+        text: '📸 กรุณาส่งสลิปผ่านหน้าชำระเงิน\n'
+          + `💳 ชำระเงินที่นี่:\n${baseUrl}/checkout?customer=${customer.id}`,
+        quickReply: {
+          items: [{
+            type: 'action',
+            action: {
+              type: 'uri',
+              label: '💳 ไปหน้าชำระเงิน',
+              uri: `${baseUrl}/checkout?customer=${customer.id}`
+            }
+          }]
         }
-      }
-
+      }])
       continue
     }
 
@@ -150,10 +85,31 @@ export async function handleLineWebhook(body: any) {
         summary += `\n💰 รวมทั้งหมด: ฿${grandTotal.toLocaleString()}`
         summary += `\n📦 จำนวน ${pendingOrders.length} ออเดอร์`
 
-        const summaryMessages: any[] = [{ type: 'text', text: summary }]
+        const { getBaseUrl } = await import('../utils/get-base-url')
+        const baseUrl = await getBaseUrl()
 
-        const paymentMsgs = await buildPaymentMessages('(รวมยอด)', grandTotal)
-        summaryMessages.push(...paymentMsgs)
+        summary += `\n\n💳 ชำระเงินที่นี่:\n${baseUrl}/checkout?customer=${customer.id}`
+
+        const summaryMessages: any[] = [{ 
+          type: 'text', 
+          text: summary,
+          quickReply: {
+            items: [
+              {
+                type: 'action',
+                action: { type: 'uri', label: '💳 ชำระเงิน', uri: `${baseUrl}/checkout?customer=${customer.id}` }
+              },
+              {
+                type: 'action',
+                action: { type: 'message', label: '🛒 CF ต่อ', text: 'CF' }
+              },
+              {
+                type: 'action',
+                action: { type: 'message', label: '❓ ติดต่อแอดมิน', text: 'ติดต่อแอดมิน' }
+              }
+            ]
+          }
+        }]
 
         await replyMessage(replyToken, summaryMessages)
         continue
@@ -186,6 +142,17 @@ export async function handleLineWebhook(body: any) {
 
       const customer = await findOrCreateCustomer(userId)
       if (!customer) continue
+
+      // เช็คว่าลูกค้าถูกแบนไหม
+      if (customer.is_banned) {
+        await replyMessage(replyToken, [{
+          type: 'text',
+          text: '🚫 บัญชีของคุณถูกระงับ\nกรุณาติดต่อแอดมินเพื่อปลดระงับ'
+        }])
+        const liveSessionForLog = await getActiveLiveSession()
+        await logCF(userId, text, cfCode, liveSessionForLog?.id ?? null, false, 'customer_banned')
+        continue
+      }
 
       // a) หา active live session
       const liveSession = await getActiveLiveSession()
@@ -344,30 +311,34 @@ export async function handleLineWebhook(body: any) {
               `📋 ออเดอร์: ${orderNumber}`
           }
         ]
-
-        const paymentMsgs = await buildPaymentMessages(orderNumber, total)
-        replyMessages.push(...paymentMsgs)
       }
 
-      // เพิ่ม quickReply buttons ใน message สุดท้าย
-      if (replyMessages.length > 0) {
-        replyMessages[replyMessages.length - 1].quickReply = {
-          items: [
-            {
-              type: 'action',
-              action: { type: 'message', label: '🛒 CF ต่อ', text: 'CF' }
-            },
-            {
-              type: 'action',
-              action: { type: 'message', label: '📋 รวมยอด', text: 'รวมยอด' }
-            },
-            {
-              type: 'action',
-              action: { type: 'message', label: '❓ ติดต่อแอดมิน', text: 'ติดต่อแอดมิน' }
-            }
-          ]
+      const { getBaseUrl } = await import('../utils/get-base-url')
+      const baseUrl = await getBaseUrl()
+
+        // เพิ่ม quickReply buttons ใน message สุดท้าย
+        if (replyMessages.length > 0) {
+          replyMessages[replyMessages.length - 1].quickReply = {
+            items: [
+              {
+                type: 'action',
+                action: { type: 'message', label: '🛒 CF ต่อ', text: 'CF' }
+              },
+              {
+                type: 'action',
+                action: { type: 'message', label: '📋 รวมยอด', text: 'รวมยอด' }
+              },
+              {
+                type: 'action',
+                action: { type: 'uri', label: '💳 ชำระเงิน', uri: `${baseUrl}/checkout?customer=${customer.id}` }
+              },
+              {
+                type: 'action',
+                action: { type: 'message', label: '❓ ติดต่อแอดมิน', text: 'ติดต่อแอดมิน' }
+              }
+            ]
+          }
         }
-      }
 
       console.log('Sending CF reply:', {
         cfCode,

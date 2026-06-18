@@ -1,12 +1,14 @@
 ---
 import CustomerLayout from '../layouts/CustomerLayout.astro'
-import CheckoutPage from '../components/checkout/CheckoutPage'
+import CheckoutFlow from '../components/checkout/CheckoutFlow'
 
+const customerId = Astro.url.searchParams.get('customer') || ''
 const orderId = Astro.url.searchParams.get('order') || ''
 ---
-<CustomerLayout title="กรอกที่อยู่จัดส่ง">
-  <CheckoutPage
+<CustomerLayout title="ชำระเงิน">
+  <CheckoutFlow
     client:only="react"
+    customerId={customerId}
     orderId={orderId}
   />
 </CustomerLayout>

@@ -3,11 +3,13 @@ import AdminLayout from '../layouts/AdminLayout.astro'
 import { APP_NAME } from '../lib/constants'
 import DashboardPage from '../components/dashboard/DashboardPage'
 import { getDashboardStats, getRecentOrders, getPendingPayments, getActiveLiveSession } from '../lib/api/dashboard'
+import { getSettings } from '../lib/api/settings'
 
 const stats = await getDashboardStats()
 const recentOrders = await getRecentOrders()
 const pendingPayments = await getPendingPayments()
 const liveSession = await getActiveLiveSession()
+const settings = await getSettings()
 ---
 
 <AdminLayout title={`Dashboard | ${APP_NAME}`}>
@@ -17,5 +19,6 @@ const liveSession = await getActiveLiveSession()
     recentOrdersData={JSON.stringify(recentOrders)}
     pendingPaymentsData={JSON.stringify(pendingPayments)}
     liveSessionData={JSON.stringify(liveSession)}
+    settingsData={JSON.stringify(settings)}
   />
 </AdminLayout>

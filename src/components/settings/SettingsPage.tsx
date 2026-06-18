@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Store, CreditCard, MessageCircle, Save, CheckCircle, Truck, Bot, Loader2, CheckCircle2, XCircle } from 'lucide-react'
+import { Store, CreditCard, MessageCircle, Save, CheckCircle, Truck, Bot, Loader2, CheckCircle2, XCircle, Zap } from 'lucide-react'
 import type { AppSettings } from '../../lib/api/settings'
 import MessageTemplatesManager from './MessageTemplatesManager'
 
@@ -35,6 +35,36 @@ interface PaymentTabProps {
 function PaymentTab({ settings, handleChange }: PaymentTabProps) {
   const [uploading, setUploading] = useState(false)
   const method = settings.payment_method || 'text'
+
+  // Check-Slip test state
+  const [testingCheckslip, setTestingCheckslip] = useState(false)
+  const [checkslipTestResult, setCheckslipTestResult] = useState<{
+    success: boolean
+    balance?: number
+    error?: string
+  } | null>(null)
+
+  const handleTestCheckslip = async () => {
+    if (!settings.checkslip_api_token) {
+      setCheckslipTestResult({ success: false, error: 'กรุณากรอก API Token ก่อน' })
+      return
+    }
+    setTestingCheckslip(true)
+    setCheckslipTestResult(null)
+    try {
+      const res = await fetch('/api/checkslip/test', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: settings.checkslip_api_token }),
+      })
+      const data = await res.json()
+      setCheckslipTestResult(data)
+    } catch (e: any) {
+      setCheckslipTestResult({ success: false, error: e?.message || 'เชื่อมต่อไม่ได้' })
+    } finally {
+      setTestingCheckslip(false)
+    }
+  }
 
   const handleQRUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -284,6 +314,255 @@ function PaymentTab({ settings, handleChange }: PaymentTabProps) {
           </div>
         </label>
       </div>
+
+      {/* ── หมดเวลาชำระ ──────────────────────────────── */}
+      <div className="flex flex-col gap-4 pt-2 border-t border-gray-100">
+        <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+          <span>⏰</span> หมดเวลาชำระ
+        </h3>
+
+        <div className="grid grid-cols-2 gap-4">
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">
+              เวลาชำระเงิน <span className="text-gray-400 font-normal">(นาที)</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={settings.payment_timeout_minutes ?? 30}
+              onChange={e => handleChange('payment_timeout_minutes', Number(e.target.value))}
+              placeholder="30"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+            />
+            <p className="text-xs text-gray-400">ออเดอร์จะถูกยกเลิกหลังจากเวลานี้</p>
+          </div>
+
+          <div className="flex flex-col gap-2">
+            <label className="text-sm font-semibold text-gray-700">
+              เตือนก่อนหมดเวลา <span className="text-gray-400 font-normal">(นาที)</span>
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={settings.warning_before_timeout_minutes ?? 5}
+              onChange={e => handleChange('warning_before_timeout_minutes', Number(e.target.value))}
+              placeholder="5"
+              className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+            />
+            <p className="text-xs text-gray-400">ส่งข้อความเตือนลูกค้าก่อนหมดเวลา</p>
+          </div>
+        </div>
+
+        {/* Auto-ban toggle */}
+        <label className="flex items-center gap-3 cursor-pointer">
+          <div
+            onClick={() => handleChange('auto_ban_on_timeout', !settings.auto_ban_on_timeout)}
+            className={`relative w-11 h-6 rounded-full transition-colors cursor-pointer flex-shrink-0 ${
+              settings.auto_ban_on_timeout ? 'bg-red-500' : 'bg-gray-200'
+            }`}
+          >
+            <span
+              className={`absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform ${
+                settings.auto_ban_on_timeout ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </div>
+          <div>
+            <p className="text-sm font-semibold text-gray-800">แบนลูกค้าที่ไม่ชำระเงินอัตโนมัติ</p>
+            <p className="text-xs text-gray-500 mt-0.5">เมื่อลูกค้าไม่ชำระเกินจำนวนครั้งที่กำหนด จะถูกแบนทันที</p>
+          </div>
+        </label>
+
+        {/* Ban threshold - only visible when auto-ban is on */}
+        {settings.auto_ban_on_timeout && (
+          <div className="flex flex-col gap-2 ml-14 animate-in fade-in slide-in-from-top-1 duration-200">
+            <label className="text-sm font-semibold text-gray-700">
+              แบนหลังจากไม่ชำระ X ครั้ง
+            </label>
+            <input
+              type="number"
+              min={1}
+              value={settings.ban_after_unpaid_count ?? 2}
+              onChange={e => handleChange('ban_after_unpaid_count', Number(e.target.value))}
+              placeholder="2"
+              className="w-32 px-4 py-2 border border-red-200 rounded-lg outline-none focus:border-red-400 text-sm bg-red-50 transition-colors"
+            />
+            <p className="text-xs text-red-400">ลูกค้าจะถูกแบนอัตโนมัติหลังไม่ชำระ {settings.ban_after_unpaid_count ?? 2} ครั้ง</p>
+          </div>
+        )}
+
+        <div className="bg-amber-50 border border-amber-100 rounded-lg px-4 py-3 text-xs text-amber-700">
+          <strong>💡 วิธีใช้:</strong> ตั้ง Cron Job เรียก{' '}
+          <code className="bg-amber-100 px-1 rounded font-mono">GET /api/cron/process-timeout</code>{' '}
+          ทุก 5 นาที (เช่น ที่ <a href="https://cron-job.org" target="_blank" rel="noopener noreferrer" className="underline font-semibold">cron-job.org</a> ฟรี)
+        </div>
+      </div>
+
+      {/* ── ตรวจสอบสลิป ──────────────────────────────── */}
+      <div className="flex flex-col gap-4 pt-2 border-t border-gray-100">
+        <h3 className="text-sm font-bold text-gray-700 flex items-center gap-2">
+          <Zap size={15} className="text-blue-500" /> ตรวจสอบสลิป
+        </h3>
+
+        {/* Radio options */}
+        <div className="flex flex-col gap-2">
+          {[
+            { value: 'manual' as const, label: 'ตรวจสอบเอง', sub: 'admin ยืนยันสลิปจากหน้า Dashboard' },
+            { value: 'auto'   as const, label: 'ตรวจอัตโนมัติ (Check-Slip API)', sub: 'ระบบตรวจสอบสลิปให้อัตโนมัติ ไม่ต้องรอ admin' },
+          ].map(opt => (
+            <label
+              key={opt.value}
+              className={`flex items-start gap-3 p-3 rounded-xl border-2 cursor-pointer transition-all ${
+                settings.slip_verify_method === opt.value
+                  ? 'border-blue-500 bg-blue-50'
+                  : 'border-gray-200 hover:border-gray-300 bg-white'
+              }`}
+            >
+              <input
+                type="radio"
+                name="slip_verify_method"
+                value={opt.value}
+                checked={settings.slip_verify_method === opt.value}
+                onChange={() => {
+                  handleChange('slip_verify_method', opt.value)
+                  setCheckslipTestResult(null)
+                }}
+                className="mt-0.5 accent-blue-600"
+              />
+              <div className="flex flex-col gap-0.5">
+                <span className="text-sm font-semibold text-gray-800">
+                  {opt.label}
+                  {opt.value === 'auto' && (
+                    <span className="ml-2 text-xs font-bold px-2 py-0.5 bg-blue-100 text-blue-700 rounded-full">แนะนำ</span>
+                  )}
+                </span>
+                <span className="text-xs text-gray-500">{opt.sub}</span>
+              </div>
+            </label>
+          ))}
+        </div>
+
+        {/* Manual info box */}
+        {settings.slip_verify_method === 'manual' && (
+          <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-600 flex items-center gap-2">
+            <span>📋</span>
+            <span>admin ต้องยืนยันสลิปจากหน้า Dashboard ด้วยตนเอง</span>
+          </div>
+        )}
+
+        {/* Auto / Check-Slip credentials */}
+        {settings.slip_verify_method === 'auto' && (
+          <div className="flex flex-col gap-4 p-4 bg-blue-50 rounded-xl border border-blue-200 animate-in fade-in slide-in-from-top-1 duration-200">
+            <p className="text-xs font-bold text-blue-700 uppercase tracking-wide flex items-center gap-2">
+              <Zap size={13} /> Check-Slip API Credentials
+            </p>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700">
+                API Token
+              </label>
+              <input
+                type="password"
+                value={settings.checkslip_api_token}
+                onChange={e => handleChange('checkslip_api_token', e.target.value)}
+                placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx"
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Merchant Code
+              </label>
+              <input
+                type="text"
+                value={settings.checkslip_merchant_code}
+                onChange={e => handleChange('checkslip_merchant_code', e.target.value)}
+                placeholder="MC-XXXXXXXX"
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+              />
+            </div>
+
+            <div className="flex flex-col gap-2">
+              <label className="text-sm font-semibold text-gray-700">
+                Webhook Secret
+              </label>
+              <input
+                type="password"
+                value={settings.checkslip_webhook_secret}
+                onChange={e => handleChange('checkslip_webhook_secret', e.target.value)}
+                placeholder="webhook secret สำหรับยืนยัน signature"
+                className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
+              />
+            </div>
+
+            {/* Test connection button */}
+            <button
+              type="button"
+              onClick={handleTestCheckslip}
+              disabled={testingCheckslip}
+              className="flex items-center justify-center gap-2 w-full py-2.5 border-2 border-blue-500 text-blue-600 font-semibold text-sm rounded-lg hover:bg-blue-100 disabled:opacity-60 transition-colors"
+            >
+              {testingCheckslip ? (
+                <><Loader2 size={16} className="animate-spin" /> กำลังทดสอบ...</>
+              ) : (
+                <><Zap size={16} /> ทดสอบการเชื่อมต่อ</>
+              )}
+            </button>
+
+            {/* Test result */}
+            {checkslipTestResult && (
+              <div className={`rounded-xl p-4 flex items-start gap-3 animate-in fade-in duration-200 ${
+                checkslipTestResult.success
+                  ? 'bg-green-50 border border-green-200'
+                  : 'bg-red-50 border border-red-200'
+              }`}>
+                {checkslipTestResult.success ? (
+                  <CheckCircle2 size={16} className="text-green-600 mt-0.5 flex-shrink-0" />
+                ) : (
+                  <XCircle size={16} className="text-red-500 mt-0.5 flex-shrink-0" />
+                )}
+                <div className="flex flex-col gap-0.5">
+                  {checkslipTestResult.success ? (
+                    <>
+                      <p className="text-sm font-semibold text-green-700">เชื่อมต่อสำเร็จ!</p>
+                      <p className="text-xs text-green-600">
+                        เครดิตคงเหลือ: <strong>{checkslipTestResult.balance?.toLocaleString() ?? 0}</strong> เครดิต
+                      </p>
+                    </>
+                  ) : (
+                    <>
+                      <p className="text-sm font-semibold text-red-700">เชื่อมต่อไม่สำเร็จ</p>
+                      <p className="text-xs text-red-500">{checkslipTestResult.error}</p>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Link to sign up */}
+            <p className="text-xs text-gray-500 text-center">
+              ยังไม่มีบัญชี?{' '}
+              <a
+                href="https://check-slip.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 underline font-semibold hover:text-blue-800"
+              >
+                สมัครได้ที่ check-slip.com
+              </a>
+            </p>
+
+            {/* Webhook URL info */}
+            <div className="bg-white border border-blue-100 rounded-lg px-4 py-3 text-xs text-blue-700">
+              <p className="font-semibold mb-1">📡 Webhook URL ที่ต้องตั้งใน Check-Slip:</p>
+              <code className="font-mono bg-blue-50 px-2 py-1 rounded break-all">
+                {typeof window !== 'undefined' ? window.location.origin : 'https://your-domain.pages.dev'}/api/checkslip/webhook
+              </code>
+            </div>
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -427,6 +706,17 @@ export default function SettingsPage({ initialSettingsData }: SettingsPageProps)
                   value={settings.shop_logo_url}
                   onChange={e => handleChange('shop_logo_url', e.target.value)}
                   placeholder="https://example.com/logo.png"
+                  className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
+                />
+              </div>
+              <div className="flex flex-col gap-2">
+                <label className="text-sm font-semibold text-gray-700">URL เว็บไซต์</label>
+                <p className="text-[11px] text-gray-400 mt-[-4px]">ใช้สำหรับสร้างลิงก์ชำระเงินส่งให้ลูกค้าใน LINE</p>
+                <input
+                  type="url"
+                  value={settings.site_url || ''}
+                  onChange={e => handleChange('site_url', e.target.value)}
+                  placeholder="https://liveflow-1on.pages.dev"
                   className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-gray-50 focus:bg-white transition-colors"
                 />
               </div>

@@ -11,6 +11,9 @@ const PUBLIC_PATHS = [
   '/print/',
   '/api/orders',
   '/api/customers',
+  '/api/cron',
+  '/api/checkout',
+  '/api/checkslip',
 ]
 
 export const onRequest = defineMiddleware(async ({ request, redirect, cookies }, next) => {

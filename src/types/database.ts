@@ -22,6 +22,11 @@ export interface Database {
           district: string | null
           province: string | null
           zipcode: string | null
+          is_banned: boolean
+          ban_reason: string | null
+          banned_at: string | null
+          ban_count: number
+          unpaid_count: number
           created_at: string
           updated_at: string
         }
@@ -37,6 +42,11 @@ export interface Database {
           district?: string | null
           province?: string | null
           zipcode?: string | null
+          is_banned?: boolean
+          ban_reason?: string | null
+          banned_at?: string | null
+          ban_count?: number
+          unpaid_count?: number
           created_at?: string
           updated_at?: string
         }
@@ -52,6 +62,11 @@ export interface Database {
           district?: string | null
           province?: string | null
           zipcode?: string | null
+          is_banned?: boolean
+          ban_reason?: string | null
+          banned_at?: string | null
+          ban_count?: number
+          unpaid_count?: number
           created_at?: string
           updated_at?: string
         }
@@ -269,6 +284,15 @@ export interface Database {
           amount: number
           status: 'pending' | 'confirmed' | 'rejected'
           confirmed_at: string | null
+          // Check-Slip fields
+          verify_method: 'manual' | 'auto' | null
+          checkslip_order_id: string | null
+          checkslip_status: 'pending' | 'verified' | 'failed' | null
+          checkslip_data: string | null
+          transfer_amount: number | null
+          diff_amount: number | null
+          sender_name: string | null
+          sender_bank: string | null
           created_at: string
         }
         Insert: {
@@ -279,6 +303,14 @@ export interface Database {
           amount: number
           status?: 'pending' | 'confirmed' | 'rejected'
           confirmed_at?: string | null
+          verify_method?: 'manual' | 'auto' | null
+          checkslip_order_id?: string | null
+          checkslip_status?: 'pending' | 'verified' | 'failed' | null
+          checkslip_data?: string | null
+          transfer_amount?: number | null
+          diff_amount?: number | null
+          sender_name?: string | null
+          sender_bank?: string | null
           created_at?: string
         }
         Update: {
@@ -289,6 +321,14 @@ export interface Database {
           amount?: number
           status?: 'pending' | 'confirmed' | 'rejected'
           confirmed_at?: string | null
+          verify_method?: 'manual' | 'auto' | null
+          checkslip_order_id?: string | null
+          checkslip_status?: 'pending' | 'verified' | 'failed' | null
+          checkslip_data?: string | null
+          transfer_amount?: number | null
+          diff_amount?: number | null
+          sender_name?: string | null
+          sender_bank?: string | null
           created_at?: string
         }
       }
@@ -413,6 +453,61 @@ export interface Database {
           is_active?: boolean
           created_at?: string
           updated_at?: string
+        }
+      }
+      order_boxes: {
+        Row: {
+          id: string
+          order_id: string
+          box_number: number
+          weight_g: number | null
+          width_cm: number | null
+          length_cm: number | null
+          height_cm: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          order_id: string
+          box_number?: number
+          weight_g?: number | null
+          width_cm?: number | null
+          length_cm?: number | null
+          height_cm?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          order_id?: string
+          box_number?: number
+          weight_g?: number | null
+          width_cm?: number | null
+          length_cm?: number | null
+          height_cm?: number | null
+          created_at?: string
+        }
+      }
+      order_box_items: {
+        Row: {
+          id: string
+          box_id: string
+          order_item_id: string
+          quantity: number
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          box_id: string
+          order_item_id: string
+          quantity?: number
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          box_id?: string
+          order_item_id?: string
+          quantity?: number
+          created_at?: string
         }
       }
     }

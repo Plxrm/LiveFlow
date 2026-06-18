@@ -8,6 +8,7 @@ import {
   Settings,
   LogOut,
   CircleUser,
+  ShieldX,
 } from 'lucide-react'
 
 const NAV_ITEMS = [
@@ -16,6 +17,7 @@ const NAV_ITEMS = [
   { href: '/products',  label: 'Inventory', icon: Package2 },
   { href: '/orders',    label: 'Orders',    icon: ShoppingCart },
   { href: '/customers', label: 'Customers', icon: Users },
+  { href: '/blacklist', label: 'Blacklist', icon: ShieldX },
 ]
 
 const BOTTOM_ITEMS = [
@@ -25,9 +27,10 @@ const BOTTOM_ITEMS = [
 interface SidebarProps {
   currentPath?: string
   pendingShipments?: number
+  bannedCount?: number
 }
 
-export default function Sidebar({ currentPath = '/', pendingShipments = 0 }: SidebarProps) {
+export default function Sidebar({ currentPath = '/', pendingShipments = 0, bannedCount = 0 }: SidebarProps) {
   const isActive = (href: string) => currentPath === href || currentPath.startsWith(href + '/')
   const [userEmail, setUserEmail] = useState<string | null>(null)
   const [loggingOut, setLoggingOut] = useState(false)
@@ -85,6 +88,12 @@ export default function Sidebar({ currentPath = '/', pendingShipments = 0 }: Sid
               {isOrders && pendingShipments > 0 && (
                 <span className="ml-auto min-w-[20px] h-5 px-1.5 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
                   {pendingShipments > 99 ? '99+' : pendingShipments}
+                </span>
+              )}
+
+              {href === '/blacklist' && bannedCount > 0 && (
+                <span className="ml-auto min-w-[20px] h-5 px-1.5 bg-red-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center">
+                  {bannedCount > 99 ? '99+' : bannedCount}
                 </span>
               )}
             </a>

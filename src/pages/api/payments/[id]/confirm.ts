@@ -83,13 +83,13 @@ export const PUT: APIRoute = async (context) => {
 
         if (!hasAddress) {
           // ไม่มีที่อยู่ → ส่งลิงก์กรอก
-          const settings = await getSettings()
-          const baseUrl = 'https://liveflow-1on.pages.dev'
+          const { getBaseUrl } = await import('../../../../lib/utils/get-base-url')
+          const baseUrl = await getBaseUrl()
 
           messages.push({
             type: 'text',
             text: '📮 กรุณากรอกที่อยู่จัดส่ง:\n'
-              + `${baseUrl}/checkout?order=${order.id}`,
+              + `${baseUrl}/checkout?customer=${customer.id}`,
             quickReply: {
               items: [
                 {
@@ -97,7 +97,7 @@ export const PUT: APIRoute = async (context) => {
                   action: {
                     type: 'uri',
                     label: '📮 กรอกที่อยู่',
-                    uri: `${baseUrl}/checkout?order=${order.id}`
+                    uri: `${baseUrl}/checkout?customer=${customer.id}`
                   }
                 },
                 {

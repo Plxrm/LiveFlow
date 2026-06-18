@@ -2,6 +2,7 @@
 import Sidebar from '../components/admin/Sidebar'
 import Header from '../components/admin/Header'
 import { getOrderStats } from '../lib/api/orders'
+import { getBannedCustomers } from '../lib/api/customers'
 import { APP_NAME } from '../lib/constants'
 import '../styles/globals.css'
 
@@ -14,11 +15,17 @@ const currentPath = Astro.url.pathname
 
 // ดึง stats เพื่อแสดง badge จำนวน orders ที่รอจัดส่ง
 let paidCount = 0
+let bannedCount = 0
 try {
-  const stats = await getOrderStats()
+  const [stats, banned] = await Promise.all([
+    getOrderStats(),
+    getBannedCustomers(),
+  ])
   paidCount = stats.paid
+  bannedCount = banned.length
 } catch {
   paidCount = 0
+  bannedCount = 0
 }
 ---
 
@@ -36,7 +43,7 @@ try {
   </head>
   <body class="font-sans antialiased">
     <div class="min-h-screen bg-gray-50 flex">
-      <Sidebar client:load currentPath={currentPath} pendingShipments={paidCount} />
+      <Sidebar client:load currentPath={currentPath} pendingShipments={paidCount} bannedCount={bannedCount} />
       <div class="flex-1 md:ml-[260px] flex flex-col min-h-screen">
         <Header client:load />
         <main class="flex-1 p-4 md:p-6 lg:p-8">
