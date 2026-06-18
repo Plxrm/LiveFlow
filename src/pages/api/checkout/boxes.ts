@@ -2,10 +2,54 @@ import type { APIRoute } from 'astro'
 import { getSupabaseAdmin } from '../../../lib/supabase/admin'
 
 /**
+ * GET /api/checkout/boxes?order_ids=id1,id2
+ * Returns boxes with item names for AddressStep
+ *
  * POST /api/checkout/boxes
  * Body: { order_ids: string[], boxes: Array<{ items: string[] }> }
  * Saves packing configuration — each box becomes a separate shipment.
  */
+
+export const GET: APIRoute = async ({ request }) => {
+  const supabaseAdmin = getSupabaseAdmin()
+  if (!supabaseAdmin) {
+    return new Response(JSON.stringify({ error: 'Service unavailable' }), { status: 503 })
+  }
+
+  try {
+    const url = new URL(request.url)
+    const orderIdsParam = url.searchParams.get('order_ids')
+    if (!orderIdsParam) {
+      return new Response(JSON.stringify({ boxes: [] }), { status: 200 })
+    }
+
+    const orderIds = orderIdsParam.split(',').filter(Boolean)
+    const primaryOrderId = orderIds[0]
+
+    const { data: boxesRaw } = await supabaseAdmin
+      .from('order_boxes')
+      .select('*, order_box_items(*, order_items(product_name))')
+      .eq('order_id', primaryOrderId)
+      .order('box_number', { ascending: true })
+
+    const boxes = ((boxesRaw as any[]) || []).map((box: any) => ({
+      box_id: box.id,
+      box_number: box.box_number,
+      item_names: ((box.order_box_items as any[]) || [])
+        .map((bi: any) => bi.order_items?.product_name)
+        .filter(Boolean),
+    }))
+
+    return new Response(
+      JSON.stringify({ boxes }),
+      { status: 200, headers: { 'Content-Type': 'application/json' } }
+    )
+  } catch (err: any) {
+    console.error('checkout/boxes GET error:', err)
+    return new Response(JSON.stringify({ error: err.message }), { status: 500 })
+  }
+}
+
 export const POST: APIRoute = async ({ request }) => {
   const supabaseAdmin = getSupabaseAdmin()
   if (!supabaseAdmin) {

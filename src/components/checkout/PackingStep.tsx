@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { ArrowLeft, ArrowRight, Plus, Package, Layers } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Package, Layers, ChevronDown } from 'lucide-react'
 import type { Order, OrderItem } from './CheckoutFlow'
 
 interface BoxItem extends OrderItem {
@@ -28,7 +28,6 @@ export default function PackingStep({ orders, customerId, onNext, onBack }: Prop
     { id: 'box-1', items: allItems },
   ])
   const [saving, setSaving] = useState(false)
-  const [dragItem, setDragItem] = useState<{ item: BoxItem; fromBoxId: string } | null>(null)
 
   const addBox = () => {
     setBoxes(prev => [
@@ -44,25 +43,16 @@ export default function PackingStep({ orders, customerId, onNext, onBack }: Prop
   const moveItem = (item: BoxItem, fromBoxId: string, toBoxId: string) => {
     if (fromBoxId === toBoxId) return
     setBoxes(prev =>
-      prev
-        .map(box => {
-          if (box.id === fromBoxId) {
-            return { ...box, items: box.items.filter(i => i.id !== item.id) }
-          }
-          if (box.id === toBoxId) {
-            return { ...box, items: [...box.items, item] }
-          }
-          return box
-        })
-        .filter(box => box.items.length > 0 || boxes.indexOf(box) === 0) // keep at least first box
+      prev.map(box => {
+        if (box.id === fromBoxId) {
+          return { ...box, items: box.items.filter(i => i.id !== item.id) }
+        }
+        if (box.id === toBoxId) {
+          return { ...box, items: [...box.items, item] }
+        }
+        return box
+      })
     )
-  }
-
-  const handleDrop = (e: React.DragEvent, toBoxId: string) => {
-    e.preventDefault()
-    if (!dragItem) return
-    moveItem(dragItem.item, dragItem.fromBoxId, toBoxId)
-    setDragItem(null)
   }
 
   const handleSaveAndNext = async () => {
@@ -90,6 +80,9 @@ export default function PackingStep({ orders, customerId, onNext, onBack }: Prop
     }
   }
 
+  const otherBoxes = (currentBoxId: string) =>
+    boxes.filter(b => b.id !== currentBoxId)
+
   return (
     <div className="flex flex-col gap-4">
       {/* Header */}
@@ -102,7 +95,7 @@ export default function PackingStep({ orders, customerId, onNext, onBack }: Prop
           <span className="text-xs text-gray-400">{boxes.length} กล่อง</span>
         </div>
         <div className="px-5 py-3 bg-blue-50 text-xs text-blue-700">
-          แต่ละกล่อง = จัดส่งแยก ลาก–วางสินค้าเพื่อแบ่งกล่อง
+          แต่ละกล่อง = จัดส่งแยก • กดปุ่มย้ายสินค้าระหว่างกล่อง
         </div>
       </div>
 
@@ -110,10 +103,9 @@ export default function PackingStep({ orders, customerId, onNext, onBack }: Prop
       {boxes.map((box, boxIdx) => (
         <div
           key={box.id}
-          onDragOver={e => e.preventDefault()}
-          onDrop={e => handleDrop(e, box.id)}
-          className="bg-white rounded-2xl shadow-sm border-2 border-dashed border-blue-200 overflow-hidden"
+          className="bg-white rounded-2xl shadow-sm border-2 border-blue-100 overflow-hidden"
         >
+          {/* Box header */}
           <div className="px-4 py-3 bg-blue-50 flex items-center justify-between">
             <div className="flex items-center gap-2">
               <Package size={16} className="text-blue-600" />
@@ -124,39 +116,66 @@ export default function PackingStep({ orders, customerId, onNext, onBack }: Prop
 
           {box.items.length === 0 ? (
             <div className="px-4 py-8 text-center text-gray-400 text-sm">
-              วางสินค้าที่นี่
+              ยังไม่มีสินค้า
             </div>
           ) : (
             <div className="flex flex-col divide-y divide-gray-50">
               {box.items.map(item => (
-                <div
-                  key={item.id}
-                  draggable
-                  onDragStart={() => setDragItem({ item, fromBoxId: box.id })}
-                  className="flex items-center justify-between px-4 py-3 cursor-grab active:cursor-grabbing active:bg-blue-50"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-1.5 h-8 bg-blue-200 rounded-full" />
-                    <div>
-                      <p className="text-sm font-semibold text-gray-800 leading-tight">{item.product_name}</p>
-                      {item.quantity > 1 && <p className="text-xs text-gray-400">× {item.quantity}</p>}
+                <div key={item.id} className="px-4 py-3">
+                  <div className="flex items-start justify-between gap-3">
+                    {/* Item info */}
+                    <div className="flex items-center gap-2.5 flex-1 min-w-0">
+                      <div className="w-1.5 h-8 bg-blue-300 rounded-full flex-shrink-0" />
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-gray-800 leading-tight truncate">
+                          {item.product_name}
+                        </p>
+                        <p className="text-xs text-gray-400">
+                          {item.quantity > 1 ? `× ${item.quantity} · ` : ''}
+                          ฿{(item.price * item.quantity).toLocaleString()}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-semibold text-gray-700">฿{(item.price * item.quantity).toLocaleString()}</span>
-                    {/* Quick move to other boxes */}
-                    {boxes.length > 1 && boxes
-                      .filter(b => b.id !== box.id)
-                      .map(targetBox => (
-                        <button
-                          key={targetBox.id}
-                          onClick={() => moveItem(item, box.id, targetBox.id)}
-                          className="text-xs text-blue-500 hover:text-blue-700 bg-blue-50 px-2 py-1 rounded-lg"
-                          title={`ย้ายไปกล่องที่ ${boxes.indexOf(targetBox) + 1}`}
-                        >
-                          →{boxes.indexOf(targetBox) + 1}
-                        </button>
-                      ))}
+
+                    {/* Move buttons (touch-friendly) */}
+                    {boxes.length > 1 && (
+                      <div className="flex-shrink-0">
+                        {otherBoxes(box.id).length === 1 ? (
+                          // Single other box → simple button
+                          <button
+                            onClick={() => moveItem(item, box.id, otherBoxes(box.id)[0].id)}
+                            className="flex items-center gap-1 text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-2 rounded-xl active:scale-95 transition-transform whitespace-nowrap"
+                          >
+                            ย้ายไปกล่อง {boxes.indexOf(otherBoxes(box.id)[0]) + 1} →
+                          </button>
+                        ) : (
+                          // Multiple other boxes → dropdown
+                          <div className="relative">
+                            <select
+                              className="appearance-none text-xs font-semibold text-blue-600 bg-blue-50 border border-blue-200 px-3 py-2 pr-7 rounded-xl outline-none active:scale-95 transition-transform"
+                              defaultValue=""
+                              onChange={e => {
+                                if (e.target.value) {
+                                  moveItem(item, box.id, e.target.value)
+                                  e.target.value = ''
+                                }
+                              }}
+                            >
+                              <option value="" disabled>ย้ายไป...</option>
+                              {otherBoxes(box.id).map(tb => (
+                                <option key={tb.id} value={tb.id}>
+                                  กล่องที่ {boxes.indexOf(tb) + 1}
+                                </option>
+                              ))}
+                            </select>
+                            <ChevronDown
+                              size={12}
+                              className="absolute right-2 top-1/2 -translate-y-1/2 text-blue-500 pointer-events-none"
+                            />
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -165,27 +184,23 @@ export default function PackingStep({ orders, customerId, onNext, onBack }: Prop
         </div>
       ))}
 
-      {/* Actions row */}
+      {/* Action row */}
       <div className="flex gap-3">
         <button
           onClick={addBox}
-          className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-blue-200 text-blue-600 font-semibold text-sm rounded-xl hover:bg-blue-50 transition-colors"
+          className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-blue-200 text-blue-600 font-semibold text-sm rounded-xl active:bg-blue-50 transition-colors"
         >
           <Plus size={16} /> เพิ่มกล่อง
         </button>
         {boxes.length > 1 && (
           <button
             onClick={mergeAll}
-            className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-gray-200 text-gray-600 font-semibold text-sm rounded-xl hover:bg-gray-50 transition-colors"
+            className="flex-1 flex items-center justify-center gap-2 py-3 border-2 border-gray-200 text-gray-600 font-semibold text-sm rounded-xl active:bg-gray-50 transition-colors"
           >
             <Layers size={16} /> รวมกล่องเดียว
           </button>
         )}
       </div>
-
-      <p className="text-xs text-center text-gray-400">
-        💡 ค้างที่สินค้าแล้วลากเพื่อย้ายกล่อง หรือกดปุ่ม →{boxes.length} เพื่อย้ายด่วน
-      </p>
 
       {/* Nav buttons */}
       <div className="flex gap-3 mt-1">

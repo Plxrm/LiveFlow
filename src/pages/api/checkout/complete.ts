@@ -6,10 +6,27 @@ import type { KexConfig } from '../../../lib/kex/client'
 
 /**
  * POST /api/checkout/complete
- * Body: { customer_id, address: { display_name, phone, address_detail,
- *   subdistrict, district, province, zipcode } }
+ * Body: {
+ *   customer_id: string,
+ *   order_ids: string[],
+ *   // Multi-box: array of per-box addresses (ใหม่)
+ *   boxes?: Array<{ box_id: string, address: AddressPayload }>,
+ *   // Legacy single-box (fallback)
+ *   address?: AddressPayload
+ * }
  * Saves address → creates KEX shipments (1 per box) → returns shipment info
  */
+
+type AddressPayload = {
+  display_name: string
+  phone: string
+  address_detail: string
+  subdistrict: string
+  district: string
+  province: string
+  zipcode: string
+}
+
 export const POST: APIRoute = async ({ request }) => {
   const supabaseAdmin = getSupabaseAdmin()
   if (!supabaseAdmin) {
@@ -18,35 +35,37 @@ export const POST: APIRoute = async ({ request }) => {
 
   try {
     const body = await request.json()
-    const { customer_id, address, order_ids } = body as {
+    const { customer_id, address, order_ids, boxes: boxesWithAddress } = body as {
       customer_id: string
-      address: {
-        display_name: string
-        phone: string
-        address_detail: string
-        subdistrict: string
-        district: string
-        province: string
-        zipcode: string
-      }
+      address?: AddressPayload
       order_ids: string[]
+      boxes?: Array<{ box_id: string; address: AddressPayload }>
     }
 
-    if (!customer_id || !address) {
-      return new Response(JSON.stringify({ error: 'Missing required fields' }), { status: 400 })
+    if (!customer_id) {
+      return new Response(JSON.stringify({ error: 'Missing customer_id' }), { status: 400 })
     }
 
-    // 1. Save customer address
+    // Resolve the "primary" address for saving to customer profile
+    // (use first box's address, or legacy single address)
+    const primaryAddress: AddressPayload | undefined =
+      boxesWithAddress?.[0]?.address ?? address
+
+    if (!primaryAddress) {
+      return new Response(JSON.stringify({ error: 'Missing address' }), { status: 400 })
+    }
+
+    // 1. Save primary address to customer profile
     await supabaseAdmin
       .from('customers')
       .update({
-        display_name: address.display_name,
-        phone: address.phone,
-        address_detail: address.address_detail,
-        subdistrict: address.subdistrict,
-        district: address.district,
-        province: address.province,
-        zipcode: address.zipcode,
+        display_name: primaryAddress.display_name,
+        phone: primaryAddress.phone,
+        address_detail: primaryAddress.address_detail,
+        subdistrict: primaryAddress.subdistrict,
+        district: primaryAddress.district,
+        province: primaryAddress.province,
+        zipcode: primaryAddress.zipcode,
       } as any)
       .eq('id', customer_id)
 
@@ -84,10 +103,12 @@ export const POST: APIRoute = async ({ request }) => {
       // If no boxes defined, treat as single box with all items
       const shipmentGroups = boxes.length > 0
         ? boxes.map((box: any) => ({
+            boxId: box.id,
             boxNumber: box.box_number,
             items: (box.order_box_items as any[] || []).map((bi: any) => bi.order_items).filter(Boolean),
           }))
         : [{
+            boxId: null,
             boxNumber: 1,
             items: (order.order_items as any[]) || [],
           }]
@@ -96,6 +117,18 @@ export const POST: APIRoute = async ({ request }) => {
         const refNo = boxes.length > 1
           ? `${order.order_number}-B${group.boxNumber}`
           : order.order_number
+
+        // Resolve address for this box:
+        // 1. boxesWithAddress matching this box's DB id
+        // 2. boxesWithAddress by index (box_number - 1)
+        // 3. primaryAddress (single-box or legacy)
+        let boxAddr: AddressPayload = primaryAddress
+        if (boxesWithAddress && boxesWithAddress.length > 0) {
+          const matched =
+            boxesWithAddress.find(b => b.box_id === group.boxId) ??
+            boxesWithAddress[group.boxNumber - 1]
+          if (matched?.address) boxAddr = matched.address
+        }
 
         const packages = group.items.length > 0
           ? group.items.map((item: any) => ({
@@ -118,13 +151,13 @@ export const POST: APIRoute = async ({ request }) => {
                 s_district: settings.shop_district || '',
                 s_province: settings.shop_province || '',
                 s_zipcode: settings.shop_zipcode || '00000',
-                r_name: address.display_name || 'ลูกค้า',
-                r_phone: address.phone || '',
-                r_address: address.address_detail,
-                r_subdistrict: address.subdistrict,
-                r_district: address.district,
-                r_province: address.province,
-                r_zipcode: address.zipcode,
+                r_name: boxAddr.display_name || 'ลูกค้า',
+                r_phone: boxAddr.phone || '',
+                r_address: boxAddr.address_detail,
+                r_subdistrict: boxAddr.subdistrict,
+                r_district: boxAddr.district,
+                r_province: boxAddr.province,
+                r_zipcode: boxAddr.zipcode,
                 product_description: packages.map((p: any) => p.p_name).join(', '),
                 cod_amount: 0,
                 ref_no: refNo,

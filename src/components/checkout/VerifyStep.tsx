@@ -27,9 +27,35 @@ export default function VerifyStep({ orders, settings, customerId, onSuccess, on
   const remaining = total - paidSoFar
   const orderIds = orders.map(o => o.id)
 
+  // Cleanup polling on unmount
   useEffect(() => {
     return () => { if (pollRef.current) clearInterval(pollRef.current) }
   }, [])
+
+  // ─── Poll payment status (manual mode) ─────────────────────────────────────
+  const startPolling = () => {
+    if (pollRef.current) clearInterval(pollRef.current)
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await fetch(
+          `/api/checkout/payment-status?order_ids=${orderIds.join(',')}`
+        )
+        const data = await res.json()
+        if (data.allConfirmed) {
+          clearInterval(pollRef.current!)
+          pollRef.current = null
+          onSuccess()
+        } else if (data.anyRejected) {
+          clearInterval(pollRef.current!)
+          pollRef.current = null
+          setError('แอดมินปฏิเสธสลิป กรุณาอัปโหลดสลิปใหม่')
+          setVerifyState('error')
+        }
+      } catch {
+        // silent — keep polling
+      }
+    }, 5000)
+  }
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -73,9 +99,10 @@ export default function VerifyStep({ orders, settings, customerId, onSuccess, on
       })
       const submitData = await submitRes.json()
 
-      // Manual mode
+      // Manual mode → wait for admin, start polling
       if (submitData.method === 'manual') {
         setVerifyState('manual_pending')
+        startPolling()
         return
       }
 
@@ -110,6 +137,8 @@ export default function VerifyStep({ orders, settings, customerId, onSuccess, on
   }
 
   const resetUpload = () => {
+    if (pollRef.current) clearInterval(pollRef.current)
+    pollRef.current = null
     setSelectedFile(null)
     setPreview(null)
     setVerifyState('upload')
@@ -176,29 +205,51 @@ export default function VerifyStep({ orders, settings, customerId, onSuccess, on
     )
   }
 
+  // ─── Manual pending: รอ admin ยืนยัน — ห้ามกดถัดไปเอง ──────────────────────
   if (verifyState === 'manual_pending') {
     return (
       <div className="flex flex-col gap-4">
-        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col items-center gap-4">
-          <div className="w-16 h-16 rounded-full bg-amber-400 flex items-center justify-center">
-            <span className="text-3xl">📋</span>
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-6 flex flex-col items-center gap-5">
+          {/* Animated spinner */}
+          <div className="relative w-20 h-20">
+            <div className="w-20 h-20 rounded-full border-4 border-amber-200" />
+            <div className="absolute inset-0 w-20 h-20 rounded-full border-4 border-amber-500 border-t-transparent animate-spin" />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="text-2xl">⏳</span>
+            </div>
           </div>
+
           <div className="text-center">
-            <h2 className="text-xl font-bold text-amber-800">ส่งสลิปสำเร็จ!</h2>
-            <p className="text-amber-700 text-sm mt-1">รอ admin ตรวจสอบและยืนยันการชำระเงิน</p>
+            <h2 className="text-xl font-bold text-amber-800">ส่งสลิปแล้ว</h2>
+            <p className="text-amber-700 text-sm mt-1">รอแอดมินตรวจสอบสลิป</p>
+            <p className="text-amber-600 text-xs mt-0.5">กรุณารอสักครู่...</p>
           </div>
+
           {preview && (
-            <img src={preview} alt="slip preview" className="w-32 h-32 object-cover rounded-xl border border-amber-200" />
+            <img src={preview} alt="slip preview" className="w-28 h-28 object-cover rounded-xl border border-amber-200" />
           )}
-          <p className="text-xs text-amber-600 text-center">
-            ระบบจะแจ้งผ่าน LINE เมื่อ admin ยืนยันแล้วนะคะ 💙
-          </p>
+
+          <div className="bg-amber-100 rounded-xl px-4 py-3 text-center">
+            <p className="text-xs text-amber-700 leading-relaxed">
+              เมื่อแอดมินยืนยันแล้ว<br />
+              <strong>หน้านี้จะเปลี่ยนอัตโนมัติ</strong>
+            </p>
+          </div>
+
+          {/* Pulsing dots to indicate live polling */}
+          <div className="flex items-center gap-1.5">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
         </div>
+
+        {/* No "ถัดไป" button — must wait for admin */}
         <button
-          onClick={onSuccess}
-          className="w-full py-4 bg-amber-500 text-white font-bold text-base rounded-2xl shadow-lg shadow-amber-200 flex items-center justify-center gap-2 active:scale-95 transition-transform"
+          onClick={resetUpload}
+          className="w-full py-3 border-2 border-gray-200 text-gray-500 text-sm font-semibold rounded-2xl flex items-center justify-center gap-2 active:scale-95 transition-transform"
         >
-          ถัดไป <ArrowRight size={18} />
+          อัปโหลดสลิปใหม่
         </button>
       </div>
     )
@@ -305,15 +356,15 @@ export default function VerifyStep({ orders, settings, customerId, onSuccess, on
                 </div>
                 <div className="text-center">
                   <p className="text-sm font-semibold text-gray-700">กดเพื่อเลือกรูป</p>
-                  <p className="text-xs text-gray-400 mt-0.5">หรือถ่ายรูปสลิปโดยตรง</p>
+                  <p className="text-xs text-gray-400 mt-0.5">ถ่ายรูปหรือเลือกจากอัลบั้ม</p>
                 </div>
               </div>
             )}
+            {/* ลบ capture="environment" เพื่อให้ iPad/iPhone เลือกได้ทั้งถ่ายและอัลบั้ม */}
             <input
               ref={fileRef}
               type="file"
               accept="image/*"
-              capture="environment"
               className="hidden"
               onChange={handleFileChange}
             />
