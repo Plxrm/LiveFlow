@@ -334,7 +334,7 @@ function PaymentTab({ settings, handleChange }: PaymentTabProps) {
               placeholder="30"
               className="w-full px-4 py-2 border border-gray-200 rounded-lg outline-none focus:border-blue-500 text-sm bg-white transition-colors"
             />
-            <p className="text-xs text-gray-400">ออเดอร์จะถูกยกเลิกหลังจากเวลานี้</p>
+            <p className="text-xs text-gray-400">เริ่มนับหลังจบไลฟ์ — ออเดอร์จะถูกยกเลิกหลังจากเวลานี้</p>
           </div>
 
           <div className="flex flex-col gap-2">

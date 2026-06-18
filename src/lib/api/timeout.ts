@@ -14,14 +14,35 @@ export async function processExpiredOrders() {
     Date.now() - timeout * 60 * 1000
   ).toISOString()
 
-  // หา orders ที่ pending/confirmed + สร้างนานกว่า timeout
-  const { data: expiredOrders } = await supabaseAdmin
+  // ─── 1. Orders จากไลฟ์: นับจาก live_sessions.ended_at ───────────────────
+  // หา orders ที่ pending/confirmed + มี live_session ที่จบแล้ว + จบนานกว่า timeout
+  const { data: liveExpiredOrders } = await supabaseAdmin
+    .from('orders')
+    .select(`
+      *,
+      customers(*),
+      live_sessions!inner(
+        id, status, ended_at
+      )
+    `)
+    .in('status', ['pending', 'confirmed'])
+    .eq('live_sessions.status', 'ended')
+    .lt('live_sessions.ended_at', cutoff)
+
+  // ─── 2. Orders ที่ไม่ได้มาจากไลฟ์: ใช้ created_at เหมือนเดิม ────────────
+  const { data: nonLiveExpiredOrders } = await supabaseAdmin
     .from('orders')
     .select('*, customers(*)')
     .in('status', ['pending', 'confirmed'])
+    .is('live_session_id', null)
     .lt('created_at', cutoff)
 
-  if (!expiredOrders || expiredOrders.length === 0) {
+  const expiredOrders = [
+    ...(liveExpiredOrders || []),
+    ...(nonLiveExpiredOrders || []),
+  ]
+
+  if (expiredOrders.length === 0) {
     return { cancelled: 0, banned: 0 }
   }
 
@@ -148,25 +169,45 @@ export async function sendTimeoutWarnings() {
   const settings = await getSettings()
   const timeout = settings.payment_timeout_minutes || 30
   const warning = settings.warning_before_timeout_minutes || 5
-  const warningTime = timeout - warning
 
-  const cutoff = new Date(
-    Date.now() - warningTime * 60 * 1000
+  // ช่วงเวลาที่ใกล้หมดเวลา: ended_at + (timeout - warning) < now < ended_at + timeout
+  // => (timeout - warning) นาทีผ่านไปแล้ว แต่ยังไม่ครบ timeout นาที
+  const warningCutoff = new Date(
+    Date.now() - (timeout - warning) * 60 * 1000
   ).toISOString()
 
-  const cutoffMax = new Date(
+  const expireCutoff = new Date(
     Date.now() - timeout * 60 * 1000
   ).toISOString()
 
-  // หา orders ที่ใกล้หมดเวลา (ในช่วง warning window)
-  const { data: orders } = await supabaseAdmin
+  // ─── 1. Orders จากไลฟ์: ใช้ live_sessions.ended_at ──────────────────────
+  const { data: liveOrders } = await supabaseAdmin
+    .from('orders')
+    .select(`
+      *,
+      customers(line_user_id, display_name),
+      live_sessions!inner(id, status, ended_at)
+    `)
+    .in('status', ['pending', 'confirmed'])
+    .eq('live_sessions.status', 'ended')
+    .lt('live_sessions.ended_at', warningCutoff)
+    .gt('live_sessions.ended_at', expireCutoff)
+
+  // ─── 2. Orders ที่ไม่ได้มาจากไลฟ์: ใช้ created_at ──────────────────────
+  const { data: nonLiveOrders } = await supabaseAdmin
     .from('orders')
     .select('*, customers(line_user_id, display_name)')
     .in('status', ['pending', 'confirmed'])
-    .lt('created_at', cutoff)
-    .gt('created_at', cutoffMax)
+    .is('live_session_id', null)
+    .lt('created_at', warningCutoff)
+    .gt('created_at', expireCutoff)
 
-  if (!orders) return 0
+  const orders = [
+    ...(liveOrders || []),
+    ...(nonLiveOrders || []),
+  ]
+
+  if (orders.length === 0) return 0
 
   let warned = 0
   for (const order of orders) {
